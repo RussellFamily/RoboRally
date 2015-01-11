@@ -1,0 +1,52 @@
+Robo Rally!
+
+This will create a GUI playable version of Robo Rally through python.
+
+####################################################################
+
+Version 1.0 - This will mostly consist of implementation of the base game, without some board elements and without item cards (so that they don't have to all be programmed initially)
+
+#####################################################################
+
+
+The first step is to identify classes and functions that are needed to play the mechanics of the game
+
+
+Classes:
+
+Game: An object that represents the instance of playing the game: controls rounds, executes moves, executes board elements, and checks for endgame conditions
+
+Player - A representation of a player in the game.  Will contain objects related to the players robot, hand, damage, touched flags, and last checkpoint
+
+Robot - Represents the robot being controlled by a player.  May be manipulated by cards by the player, board elements, and can interact with other robot objects.
+
+Card - An object that details out a move or rotate action a robot takes during a round by putting it into a register
+
+Register - An object that contains a move action.  Also contains a boolean flag for register lock.
+
+Board - Represents an array of board spaces.  These contain board elements, flags, and robots.
+
+Board Space - a single square of board that may contain board elements, including the flag and checkpoint
+
+Flag - An object a robot needs to touch in order to win the game.  Exists on the board, and acts as a checkpoint
+
+Checkpoint - A space on the board that allows archives to be backed (any phase) and heal damage (round end)
+
+
+
+
+Functions:
+
+Laserfire -(Robot/Board Space) A function that a robot or board element has that fires a laser at all in line of sight
+
+Execute Moves - (Game) Executes all robot moves in the phase
+
+Execute Board Elements - (Game) Executes all board elements, in their respective phase
+
+Execute space Element - (Board Space) Execute action of the space )all elements must be programmed individually)
+
+Test Checkpoints - (Game/Board Space) Check if robots have matched a checkpoint at phase end, and update accordingly
+
+Test Flags - (Game/Board Space) Check if robots have reached a flag at round end.  Check if it is last flag for game end
+
+Apply Damage - (Robot) Robot applies any damage taken to itself, locking appropriate registers and potentially killing itself
