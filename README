@@ -14,11 +14,13 @@ The first step is to identify classes and functions that are needed to play the 
 
 Classes:
 
-Game: An object that represents the instance of playing the game: controls rounds, executes moves, executes board elements, and checks for endgame conditions
+Game: An object that represents the instance of playing the game: controls rounds, executes moves, executes board elements, and checks for endgame conditions, and owns the board, card deck, and player objects.
 
 Player - A representation of a player in the game.  Will contain objects related to the players robot, hand, damage, touched flags, and last checkpoint
 
 Robot - Represents the robot being controlled by a player.  May be manipulated by cards by the player, board elements, and can interact with other robot objects.
+
+Deck - An object representing the deck of movement cards dealt out to players, contains cards in a draw and discard pile, and can be shuffled.
 
 Card - An object that details out a move or rotate action a robot takes during a round by putting it into a register
 
@@ -41,9 +43,9 @@ Laserfire -(Robot/Board Space) A function that a robot or board element has that
 
 Execute Moves - (Game) Executes all robot moves in the phase
 
-Execute Board Elements - (Game) Executes all board elements, in their respective phase
+Execute Board Elements - (Game) Executes all board elements, in their respective phase. All elements must have their own function
 
-Execute space Element - (Board Space) Execute action of the space )all elements must be programmed individually)
+Execute space Element - (Board Space) Execute action of the space in their correct order.
 
 Test Checkpoints - (Game/Board Space) Check if robots have matched a checkpoint at phase end, and update accordingly
 
