@@ -14,3 +14,8 @@ class Card(priority,type):
 		self.priority=priority
 		self.type=typerally.py
 ###########################
+#Deck object used by the game to control the movement cards.  Contains the discard and draw pile, and can be shuffled
+###########################
+class Deck():
+	
+	def __init__(self):
