@@ -1,11 +1,36 @@
+#Modules!
+import random
+
 #Classes used in the game
 #Game object that starts each game and controls game flow
 ###########################
 class Game():
 
 	def __init__(self):
-		pass
+		self.playerlist=[]
+		self.deck=Deck()
 
+	#Function that deals out cards to all players
+	def deal_hands():
+		for player in playerlist:
+			if player.robot.shutdown==True:
+				pass
+			else:
+				for i in range(player.robot.damage):
+					self.deal_card(player)
+
+	#Function used to deal out a single card to a player.  Used to check if deck is also empty when dealing
+	def deal_card(self,player):
+		if len(self.deck.draw) ==0:
+			self.deck.shuffle_deck()
+		player.hand.append(self.deck.draw.pop())
+
+	#Execute move actions of all robots
+	def execute_moves(register):
+		movelist=[]
+		for player in playerlist:
+			movelist.append(player.registers[register].card)
+		sorted(movelist,key=lambda move:move.priority)
 ###########################
 #Card object is used by robots to move or rotate, can either be in a deck, discard, hand, or register (locked or unlocked)
 ###########################
@@ -19,34 +44,45 @@ class Card():
 ###########################
 class Deck():
 
+	#create draw
 	def __init__(self):
-		self.deck=[]
+		self.draw=[]
 		self.discard=[]
 		self.create_deck()
+		self.shuffle_deck(True)
+
 	#create all the cards in the movement deck
 	def create_deck(self):
 		#create Uturns
 		for i in [x for x in range(10,70,10)]:
 			newcard=Card(i,'U-turn')
-			self.deck.append(newcard)
+			self.draw.append(newcard)
 		for i in [x for x in range(70,430,20)]:
 			newcard=Card(i,'Rotate_Left')
-			self.deck.append(newcard)
+			self.draw.append(newcard)
 		for i in [x for x in range(80,440,20)]:
 			newcard=Card(i,'Rotate_Right')
-			self.deck.append(newcard)
+			self.draw.append(newcard)
 		for i in [x for x in range(430,490,10)]:
 			newcard=Card(i,'Backup')
-			self.deck.append(newcard)
+			self.draw.append(newcard)
 		for i in [x for x in range(490,670,10)]:
 			newcard=Card(i,'Move_1')
-			self.deck.append(newcard)
+			self.draw.append(newcard)
 		for i in [x for x in range(670,790,10)]:
 			newcard=Card(i,'Move_2')
-			self.deck.append(newcard)
+			self.draw.append(newcard)
 		for i in [x for x in range(790,850,10)]:
 			newcard=Card(i,'Move_3')
-			self.deck.append(newcard)
+			self.draw.append(newcard)
+
+		#shuffles the deck, used at game start and any time a new deck needs to be formed
+		def shuffle_deck(self,init=False):
+			#swap discard and draw piles, then shuffle the draw pile.  If init is true, doesn't switch the decks
+			if init == False:
+				self.draw,self.discard=self.discard,self.draw
+			random.shuffle(self.draw)
+
 ###########################
 #Player Object is created by the game to represent an individual player.  Has a robot and deck attached to it.
 ###########################
@@ -56,6 +92,7 @@ class Player():
 		self.name=name
 		self.robot=Robot(robot_name)
 		self.deck=Deck()
+		self.hand=[]
 ###########################
 #Robot Object is created under a player.  It controls its registers, spot on the board, facing, and damage.
 ###########################
