@@ -9,13 +9,24 @@ class Game():
 	def __init__(self):
 		self.playerlist=[]
 		self.deck=Deck()
+		self.game_setup()
+		#hardcoding staring board 'test'
+		self.board=Board('test')
 
-	def game_setup():
+	def game_setup(self):
+		pname=raw_input('What is the players name?\n')
+		self.playerlist.append(Player(pname,'Twonky'))
 
-
+	#temporary print function used to print the status of the board
+	def print_board(self):
+		print(' - - L - - - - - - - - - - - - \n')
+		print('|         |         |         |\n')
+		print('W         |    +--- |  <----  |\n')
+		print('|         |    v    |         |\n')
+		print(' - - - - - - - - - - - - - - - \n')
 
 	#Function that deals out cards to all players
-	def deal_hands():
+	def deal_hands(self):
 		for player in playerlist:
 			if player.robot.shutdown==True:
 				pass
@@ -30,7 +41,7 @@ class Game():
 		player.hand.append(self.deck.draw.pop())
 
 	#Execute move actions of all robots
-	def execute_move_phase(register):
+	def execute_move_phase(self,register):
 		moveorder=[]=list(playerlist)
 		sorted(moveorder,key=lambda player:player.robot.registers[register].priority)
 		for player in moveorder:
@@ -114,7 +125,7 @@ class Robot():
 		self.shutdown=False
 
 
-	def initiate_registers():
+	def initiate_registers(self):
 		reg={}
 		for i in range(1,6):
 			reg[i]=Register(i)
@@ -138,11 +149,11 @@ class Board():
 		self.board_dict=self.load_board(boardname)
 
 	#load yaml'd dictionary of board elements into an array
-	def load_board(boardname):
-		loaded_dict=yaml.load(open(boardname+"_config.txt").read()[:-1])
+	def load_board(self,boardname):
+		loaded_dict=yaml.load(open("Boards/"+boardname+"/"+boardname+"_config.txt").read()[:-1])
 		bdict={}
 		for key,value in loaded_dict.iteritems():
-			bdict[key]=Boardspce(key,value)
+			bdict[key]=Boardspace(key,value)
 		return bdict
 ###########################
 #Board game space used to store the location and properties of that space
@@ -156,9 +167,9 @@ class Boardspace():
 		self.cb=[False,None]
 		self.checkpoint=False
 		self.Flag=None
-		self.strip_features()
+		self.strip_features(features)
 
-	def strip_features():
+	def strip_features(self,features):
 		for feature in features:
 			if feature=='checkpoint':
 				self.checkpoint=True
