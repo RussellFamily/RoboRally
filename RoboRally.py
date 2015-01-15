@@ -80,12 +80,12 @@ class Deck():
 			newcard=Card(i,'Move_3')
 			self.draw.append(newcard)
 
-		#shuffles the deck, used at game start and any time a new deck needs to be formed
-		def shuffle_deck(self,init=False):
+	#shuffles the deck, used at game start and any time a new deck needs to be formed
+	def shuffle_deck(self,init=False):
 			#swap discard and draw piles, then shuffle the draw pile.  If init is true, doesn't switch the decks
-			if init == False:
-				self.draw,self.discard=self.discard,self.draw
-			random.shuffle(self.draw)
+		if init == False:
+			self.draw,self.discard=self.discard,self.draw
+		random.shuffle(self.draw)
 
 ###########################
 #Player Object is created by the game to represent an individual player.  Has a robot and deck attached to it.
@@ -95,7 +95,7 @@ class Player():
 	def __init__(self,name,robot_name):
 		self.name=name
 		self.robot=Robot(robot_name)
-		self.deck=Deck()
+
 		self.hand=[]
 ###########################
 #Robot Object is created under a player.  It controls its registers, spot on the board, facing, and damage.
@@ -119,12 +119,14 @@ class Register():
 		self.register_lock=False
 		self.card=None
 ###########################
-#Board will contain an object of board spaces, stored in a 2D array.
+#Board will contain an object of board spaces, stored in a dictionary keyed by an (x,y) pair
 ###########################
 class Board():
 
 	def __init__(self,boardname):
-		self.name=name
-		
+		self.boardname=boardname
+		self.board_dict=self.load_board(boardname)
+
+	#load yaml'd dictionary of board elements into an array
 	def load_board(boardname):
-		board_info=yaml.load(open(boardname+"_config.txt").read()[:-1])
+		board_dict=yaml.load(open(boardname+"_config.txt").read()[:-1])
