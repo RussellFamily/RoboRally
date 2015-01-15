@@ -1,6 +1,6 @@
 #Modules!
 import random
-
+import yaml
 #Classes used in the game
 #Game object that starts each game and controls game flow
 ###########################
@@ -26,11 +26,15 @@ class Game():
 		player.hand.append(self.deck.draw.pop())
 
 	#Execute move actions of all robots
-	def execute_moves(register):
-		movelist=[]
-		for player in playerlist:
-			movelist.append(player.registers[register].card)
-		sorted(movelist,key=lambda move:move.priority)
+	def execute_move_phase(register):
+		moveorder=[]=list(playerlist)
+		sorted(moveorder,key=lambda player:player.robot.registers[register].priority)
+		for player in moveorder:
+			execute_move(player.robot.registers[register].cardtype)
+
+	#Execute individual move action specified by a movement card
+	def execute_move(movetype):
+
 ###########################
 #Card object is used by robots to move or rotate, can either be in a deck, discard, hand, or register (locked or unlocked)
 ###########################
@@ -119,5 +123,8 @@ class Register():
 ###########################
 class Board():
 
-	def __init__(self):
-		pass
+	def __init__(self,boardname):
+		self.name=name
+		
+	def load_board(boardname):
+		board_info=yaml.load(open(boardname+"_config.txt").read()[:-1])
