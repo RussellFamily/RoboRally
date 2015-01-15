@@ -10,6 +10,10 @@ class Game():
 		self.playerlist=[]
 		self.deck=Deck()
 
+	def game_setup():
+
+
+
 	#Function that deals out cards to all players
 	def deal_hands():
 		for player in playerlist:
@@ -33,7 +37,7 @@ class Game():
 			execute_move(player.robot.registers[register].cardtype)
 
 	#Execute individual move action specified by a movement card
-	def execute_move(movetype):
+	#def execute_move(movetype):
 
 ###########################
 #Card object is used by robots to move or rotate, can either be in a deck, discard, hand, or register (locked or unlocked)
@@ -87,6 +91,7 @@ class Deck():
 			self.draw,self.discard=self.discard,self.draw
 		random.shuffle(self.draw)
 
+
 ###########################
 #Player Object is created by the game to represent an individual player.  Has a robot and deck attached to it.
 ###########################
@@ -95,7 +100,6 @@ class Player():
 	def __init__(self,name,robot_name):
 		self.name=name
 		self.robot=Robot(robot_name)
-
 		self.hand=[]
 ###########################
 #Robot Object is created under a player.  It controls its registers, spot on the board, facing, and damage.
@@ -106,9 +110,15 @@ class Robot():
 		self.robot_name=robot_name
 		#import image used for robot
 		self.damage=0
-		####HOW SHOULD I INITIALIZE REGISTERS???? Dictionary with phase number as the key?
-		self.registers={1:None,2:None,3:None,4:None,5:None}
+		self.registers=self.initiate_registers()
 		self.shutdown=False
+
+
+	def initiate_registers():
+		reg={}
+		for i in range(1,6):
+			reg[i]=Register(i)
+		return reg
 ###########################
 #Register is an object owned by a robot which represents a container for a phase action and register lock
 ###########################
@@ -129,4 +139,32 @@ class Board():
 
 	#load yaml'd dictionary of board elements into an array
 	def load_board(boardname):
-		board_dict=yaml.load(open(boardname+"_config.txt").read()[:-1])
+		loaded_dict=yaml.load(open(boardname+"_config.txt").read()[:-1])
+		bdict={}
+		for key,value in loaded_dict.iteritems():
+			bdict[key]=Boardspce(key,value)
+		return bdict
+###########################
+#Board game space used to store the location and properties of that space
+###########################
+class Boardspace():
+
+	def __init__(self,location,features):
+		self.location=location
+		self.walls=[]
+		self.lasers=[]
+		self.cb=[False,None]
+		self.checkpoint=False
+		self.Flag=None
+		self.strip_features()
+
+	def strip_features():
+		for feature in features:
+			if feature=='checkpoint':
+				self.checkpoint=True
+			elif feature[-5:]=='_wall':
+				self.walls.append(feature[:-5])
+			elif feature[-3:]=='_cb':
+				self.cb=[True,feature[:-3]]
+			elif feature[-6:]=='_laser':
+				self.lasers.append(feature[:-6])
