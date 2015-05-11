@@ -15,11 +15,13 @@ Board: The board will be a square grid, with squares having the following proper
 1. Walls - creates an orthogonal block between two spaces.  Can exist on the edge of the board as well
 2. Pits - Holes of death robots fall into
 3. Checkpoints - A place to archive robots or heal them.  Usually denoted by one wrench or two wrenches
-4. Conveyor Belts - Spaces that cause the robots to automatically move.  These come in two varieties: Slow (1 space) or Fast (2 spaces)
+4. Conveyor Belts - Spaces that cause the robots to automatically move.  These come in two varieties: Slow (1 space) or Fast (2 spaces).  Each conveyor belt space (either slow or fast) can move the robot in 3 different ways:
+	a. Move straight - the robot moves forward one space along the conveyor belt.
+	b. Move one and turn right - Like turning a corner, the robot moves forward onto the next conveyor belt space, and rotates right 90 degrees.
+	c. Move one and turn left - Same as turn right, except rotates left 90 degrees.
 5. Lasers - Lasers that fire from one wall to another
 
 Robots: As its a top down view of the board, it will be 2 dimensional.  Robots must have a FACING, so players know what direction it is currently heading if it moves.  They will also have archive tokens which will be tied to the above checkpoints (probably have a small icon matching the robot image - other ideas welcome)
 
 Flags - Flags are placed randomly or chosen by players on top of other spaces on the board, but not replacing them (a flag on a conveyor belt is still a conveyor belt space). These flags number from 1 until the max number chosen.  Numbers are important, as they must touch them in order.s
 
-New changes!
