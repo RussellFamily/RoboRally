@@ -10,12 +10,25 @@ class Game():
 		self.playerlist=[]
 		self.deck=Deck()
 
-	def game_setup():
-
-
-
+	def game_setup(self):
+		#Determine how many players are going to be playing the game
+		num_allowed_players=[2,3,4]
+		print 'Welcome to Robo Rally!\n'
+		while True:
+			try:
+				x=int(raw_input('How many players are playing? Valid numbers are 2, 3, and 4.\n'))
+			except:
+				print 'Not a valid value. Please try again.'
+				continue
+			else:
+				if x in num_allowed_players:
+					break
+				else:
+					print 'Not a valid number of players. Please try again.'
+		
+		
 	#Function that deals out cards to all players
-	def deal_hands():
+	def deal_hands(self):
 		for player in playerlist:
 			if player.robot.shutdown==True:
 				pass
@@ -25,14 +38,14 @@ class Game():
 
 	#Function used to deal out a single card to a player.  Used to check if deck is also empty when dealing
 	def deal_card(self,player):
-		if len(self.deck.draw) ==0:
+		if len(self.deck.draw) == 0:
 			self.deck.shuffle_deck()
 		player.hand.append(self.deck.draw.pop())
 
-	#Execute move actions of all robots
+	#Execute move actions of all robots by sorting moves of active players
 	def execute_move_phase(register):
-		moveorder=[]=list(playerlist)
-		sorted(moveorder,key=lambda player:player.robot.registers[register].priority)
+		moveorder=[player for player in self.playerlist if player.robot.dead==False and player.robot.shutdown=False]
+		moveorder=sorted(moveorder,key=lambda player:player.robot.registers[register].priority)
 		for player in moveorder:
 			execute_move(player.robot.registers[register].cardtype)
 
@@ -112,6 +125,8 @@ class Robot():
 		self.damage=0
 		self.registers=self.initiate_registers()
 		self.shutdown=False
+		self.dead=False
+		self.num_death=0
 
 
 	def initiate_registers():
