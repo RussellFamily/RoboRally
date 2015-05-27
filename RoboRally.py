@@ -26,6 +26,12 @@ class Game():
 				else:
 					print 'Not a valid number of players. Please try again.'
 		
+		#Determine board to be used - for now will be a test board - and load the dictionary of the board
+		self.board='test'
+		board_file=open(self.board+'/'+self.board+'_config.txt','r')
+		board_dict=yaml.load(board_file)
+		
+		#Convert board dict to usable input
 		
 	#Function that deals out cards to all players
 	def deal_hands(self):
