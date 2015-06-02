@@ -2,6 +2,8 @@
 import random
 import yaml
 import pygame
+import numpy as np
+import math
 #Classes used in the game
 ###########################
 #Game Object that runs the display, handling updates to the screen
@@ -105,7 +107,9 @@ class Game():
 		self.assign_registers()
 		
 		#time to execute all of the moves register by register
-
+		#execute movement for each register phase
+		for i in range(1,6):
+			pass
 
 	def game_setup(self):
 		#Determine how many players are going to be playing the game
@@ -171,17 +175,27 @@ class Game():
 		player.hand.append(self.deck.draw.pop())
 
 	#Execute move actions of all robots by sorting moves of active players
-	def execute_move_phase(register):
+	def execute_move_phase(self,register):
 		moveorder=[player for player in self.playerlist if player.robot.dead==False and player.robot.shutdown==False]
 		moveorder=sorted(moveorder,key=lambda player:player.robot.registers[register].priority)
 		for player in moveorder:
-			execute_move(player.robot.registers[register].cardtype)
+			execute_move(player.robot.registers[register].card.cardtype)
 
 	#Execute individual move action specified by a movement card
-	#def execute_move(movetype):
+	#the steps to be performed for each is listed here
+	def execute_move(self,movetype):
+		if movetype=='Move_3':
+			for i in range(3):
+				
+
+
+	def rotate_vector(self, dir_array,theta_deg):
+		theta_rad=math.radians(theta_deg)
+		rotation_vector=np.array([[math.cos(theta_rad),-math.sin(theta_rad)],[math.sin(theta_rad),math.cos(theta_rad)]])
+		final_vector=rotation_vector.dot(dir_array)
+		return np.around(final_vector,0)
 
 ###########################
-
 #Card object is used by robots to move or rotate, can either be in a deck, discard, hand, or register (locked or unlocked)
 ###########################
 class Card():
@@ -189,6 +203,12 @@ class Card():
 	def __init__(self,priority,cardtype):
 		self.priority=priority
 		self.cardtype=cardtype
+		
+		
+			
+		
+		
+		
 ###########################
 #Deck object used by the game to control the movement cards.  Contains the discard and draw pile, and can be shuffled
 ###########################
@@ -276,8 +296,8 @@ class Robot():
 		self.dead=False
 		self.num_death=0
 		#positional and directional information for each bot
-		self.position=(0,0)
-		self.direction='n'
+		self.position=np.array([0,0])
+		self.direction=np.array([0,0])
 
 
 	def initiate_registers(self):
@@ -294,6 +314,9 @@ class Register():
 		self.number=number
 		self.register_lock=False
 		self.card=None
+		
+		
+		
 ###########################
 #Board will contain an object of board spaces, stored in a dictionary keyed by an (x,y) pair
 ###########################
