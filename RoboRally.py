@@ -109,7 +109,20 @@ class Game():
 		#time to execute all of the moves register by register
 		#execute movement for each register phase
 		for i in range(1,6):
-			pass
+			#execute player moves
+			execute_move_phase(i)
+			#check for death offboard
+			
+			
+	#check if players' robots ended up offboard		
+	def check_offboard(self):
+		for player in self.playerlist:
+			if player.robot.location[0]>=0 and player.robot.location[0]<12 and player.robot.location[1]>=0 and player.robot.location[1]<12:
+				#robot is fine
+				pass
+			else:
+				player.robot.dead==True
+			
 
 	def game_setup(self):
 		#Determine how many players are going to be playing the game
@@ -179,21 +192,11 @@ class Game():
 		moveorder=[player for player in self.playerlist if player.robot.dead==False and player.robot.shutdown==False]
 		moveorder=sorted(moveorder,key=lambda player:player.robot.registers[register].priority)
 		for player in moveorder:
-			execute_move(player.robot.registers[register].card.cardtype)
-
-	#Execute individual move action specified by a movement card
-	#the steps to be performed for each is listed here
-	def execute_move(self,movetype):
-		if movetype=='Move_3':
-			for i in range(3):
-				
-
-
-	def rotate_vector(self, dir_array,theta_deg):
-		theta_rad=math.radians(theta_deg)
-		rotation_vector=np.array([[math.cos(theta_rad),-math.sin(theta_rad)],[math.sin(theta_rad),math.cos(theta_rad)]])
-		final_vector=rotation_vector.dot(dir_array)
-		return np.around(final_vector,0)
+			#execute_move(player.robot.registers[register].card.cardtype)
+			player.robot.execute_move(register)
+	
+	
+	
 
 ###########################
 #Card object is used by robots to move or rotate, can either be in a deck, discard, hand, or register (locked or unlocked)
@@ -305,6 +308,45 @@ class Robot():
 		for i in range(1,6):
 			reg[i]=Register(i)
 		return reg
+		
+	#Execute individual move action specified by a movement card
+	#the steps to be performed for each is listed here
+	#for now, movement will be confined to a grid with no restrictions.  Collisions for walls when moving will be handled later
+	#probably need another function to handle what happens during a move
+	def execute_move(self,register):
+		movetype=self.registers[register].card
+		if movetype=='Move_3':
+			for i in range(3):
+				self.move_one_square()
+		elif movetype=='Move_2':
+			for i in range(2):
+				self.move_one_square()
+		elif movetype=='Move_1':
+			for i in range(1):
+				self.move_one_square()
+		elif movetype=='Backup':
+			self.move_one_square(backup=True)
+		elif movetype=='Rotate_Right':
+			self.rotate_robot(-90)
+		elif movetype=='Rotate_Left':
+			self.rotate_robot(90)
+		elif movetype=='U-turn':
+			self.rotate_robot(180)
+		
+	
+	#this movement function simply will move a robot one square, it will not check for boundaries that will hinder movement or other robots, or walls beyond other robots
+	def move_one_square(self,back=False):
+		self.position=self.position+self.direction
+	
+	def rotate_robot(self,theta):
+		self.direction=self.rotate_vector(self.direction,theta)
+	
+	#function that handles rotation of a vector by 90,-90, or 180 degrees and returns the resulting vector
+	def rotate_vector(self, dir_array,theta_deg):
+		theta_rad=math.radians(theta_deg)
+		rotation_vector=np.array([[math.cos(theta_rad),-math.sin(theta_rad)],[math.sin(theta_rad),math.cos(theta_rad)]])
+		final_vector=rotation_vector.dot(dir_array)
+		return np.around(final_vector,0)
 ###########################
 #Register is an object owned by a robot which represents a container for a phase action and register lock
 ###########################
