@@ -27,3 +27,6 @@ Robots: As its a top down view of the board, it will be 2 dimensional.  Robots m
 
 Flags - Flags are placed randomly or chosen by players on top of other spaces on the board, but not replacing them (a flag on a conveyor belt is still a conveyor belt space). These flags number from 1 until the max number chosen.  Numbers are important, as they must touch them in order.s
 
+
+###6/4/15
+#Need a way to identify border boundaries between the tiles on the board

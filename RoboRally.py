@@ -9,14 +9,27 @@ import math
 #Game Object that runs the display, handling updates to the screen
 ###########################
 class Display():
-	def __init__(self):
+	def __init__(self,board):
 		pygame.init()
-		self.screensize=(1200,800)
+		self.screensize=(1200,1200)
 		self.screen=pygame.display.set_mode(self.screensize)
+		self.board=board
+	#currently the blitscreen needs the positions of the robots, so i'm gonna grab i
+	#it from the Game object, there is probably a better way to do this
+	def blitscreen(self,Game):
+		self.screen.fill((0,0,0))
+		for row in range(len(self.board)):
+			for col in range(len(self.board[row])):
+				image=pygame.image.load('Images/Board_Elements/'+self.board[row][col]+'.jpg')
+				reducedimage=pygame.transform.scale(image,(100,100))
+				self.screen.blit(reducedimage,(row*100,col*100))
+		for player in Game.playerlist:
+			image=pygame.image.load('Images/Robots/'+player.robot.robot_name+'.jpg')
+			reducedimage=pygame.transform.scale(image,(100,100))
+			self.screen.blit(reducedimage,(player.robot.position[0]*100,player.robot.position[1]*100))
+
+		pygame.display.update()
 		
-
-
-
 ###########################
 #Game object that starts each game and controls game flow
 ###########################
@@ -26,7 +39,6 @@ class Game():
 	def __init__(self):
 		self.playerlist=[]
 		self.deck=Deck()
-		
 
 	def run_game(self):
 		#get the board and players setup to play
@@ -95,7 +107,8 @@ class Game():
 	def play_game(self):
 		
 		#iterate through rounds of play
-		
+		#create display with each players robot
+		self.display.blitscreen(self)
 		#first step is to deal out cards to all players
 		self.deal_hands()
 		
@@ -108,20 +121,30 @@ class Game():
 		
 		#time to execute all of the moves register by register
 		#execute movement for each register phase
+		#require input to begin first movement
+		raw_input('Press any key to start movement')
 		for i in range(1,6):
 			#execute player moves
-			execute_move_phase(i)
+			self.execute_move_phase(i)
+			#print position to check if update is working
+			for player in self.playerlist:
+				print player.robot.position
+			
 			#check for death offboard
-			
-			
+			self.check_offboard()
+			#update board
+			self.display.blitscreen(self)
+			#require button to go to next phase
+			raw_input('press any key to continue')
 	#check if players' robots ended up offboard		
 	def check_offboard(self):
 		for player in self.playerlist:
-			if player.robot.location[0]>=0 and player.robot.location[0]<12 and player.robot.location[1]>=0 and player.robot.location[1]<12:
+			if player.robot.position[0]>=0 and player.robot.position[0]<12 and player.robot.position[1]>=0 and player.robot.position[1]<12:
 				#robot is fine
 				pass
 			else:
 				player.robot.dead==True
+				print player.name+ "'s robot is off the board!\n"
 			
 
 	def game_setup(self):
@@ -159,17 +182,29 @@ class Game():
 		#self.board='test'
 		#board_file=open(self.board+'/'+self.board+'_config.txt','r')
 		#board_dict=yaml.load(board_file)
+		#instead, make a board whose only tiles are blank
+		#ignore board object for now
+		
+		#CODE FOR BASIC BOARD
+		#board=[['blank']*12]*12
+		#self.display=Display(board)
+
 		
 		#Convert board dict to usable input
 		#TODO
 		
+		
 		#Assign robots to players - default arrangement for now
 		#TODO - make dynamic
-		robots=['r1','r2','r3','r4']
+		robots=['player-1','player-2','player-3','player-4']
 		#list comprehension to create list of players
 		self.playerlist=[Player(player,robots[i]) for i,player in enumerate(playernames)]
 		#The game now has a list of the players, their names, and which robots they are playing!
 		#Setup is complete, time to play the game
+		#initialize robots onto the bottom row for now, will create additional starting positions later
+		for i,player in enumerate(self.playerlist):
+			player.robot.position=np.array([i,0])
+			player.robot.direction=np.array([0,1])
 		
 		
 	#Function that deals out cards to all players
@@ -190,7 +225,7 @@ class Game():
 	#Execute move actions of all robots by sorting moves of active players
 	def execute_move_phase(self,register):
 		moveorder=[player for player in self.playerlist if player.robot.dead==False and player.robot.shutdown==False]
-		moveorder=sorted(moveorder,key=lambda player:player.robot.registers[register].priority)
+		moveorder=sorted(moveorder,key=lambda player:player.robot.registers[register].card.priority)
 		for player in moveorder:
 			#execute_move(player.robot.registers[register].card.cardtype)
 			player.robot.execute_move(register)
@@ -314,7 +349,7 @@ class Robot():
 	#for now, movement will be confined to a grid with no restrictions.  Collisions for walls when moving will be handled later
 	#probably need another function to handle what happens during a move
 	def execute_move(self,register):
-		movetype=self.registers[register].card
+		movetype=self.registers[register].card.cardtype
 		if movetype=='Move_3':
 			for i in range(3):
 				self.move_one_square()
@@ -326,18 +361,23 @@ class Robot():
 				self.move_one_square()
 		elif movetype=='Backup':
 			self.move_one_square(backup=True)
+		#since the convention of pygame is to treat the origin in the upper left corner,
+		#the rotation is inverted from the unit circle, hence angle changes
 		elif movetype=='Rotate_Right':
-			self.rotate_robot(-90)
-		elif movetype=='Rotate_Left':
 			self.rotate_robot(90)
+		elif movetype=='Rotate_Left':
+			self.rotate_robot(-90)
 		elif movetype=='U-turn':
 			self.rotate_robot(180)
-		
+		else:
+			print 'NOT A VALID MOVE TYPE'
 	
 	#this movement function simply will move a robot one square, it will not check for boundaries that will hinder movement or other robots, or walls beyond other robots
-	def move_one_square(self,back=False):
-		self.position=self.position+self.direction
-	
+	def move_one_square(self,backup=False):
+		if backup==False:
+			self.position=self.position+self.direction
+		else:
+			self.position=self.position-self.direction
 	def rotate_robot(self,theta):
 		self.direction=self.rotate_vector(self.direction,theta)
 	
@@ -370,18 +410,24 @@ class Board():
 
 	#load yaml'd dictionary of board elements into an array
 	def load_board(boardname):
-		loaded_dict=yaml.load(open(boardname+"_config.txt").read()[:-1])
+		loaded_dict=yaml.load(open("Boards/"+boardname+"/board_config.txt").read()[:-1])
 		bdict={}
 		for key,value in loaded_dict.iteritems():
-			bdict[key]=Boardspce(key,value)
+			bdict[key]=Boardspce(key,value[0],value[1])
 		return bdict
+		
+	#currently load all board elements into 	
+	def load_images():
+		board_spaces=['blank','checkpoint-1','checkpoint-2',]
+		
 ###########################
 #Board game space used to store the location and properties of that space
 ###########################
 class Boardspace():
 
-	def __init__(self,location,features):
+	def __init__(self,location,boardtile,features):
 		self.location=location
+		self.boardtile=boardtile
 		self.walls=[]
 		self.lasers=[]
 		self.cb=[False,None]
@@ -389,8 +435,11 @@ class Boardspace():
 		self.Flag=None
 		self.strip_features()
 
-	def strip_features():
-		for feature in features:
+	def_load_image
+
+	def strip_features(self):
+		pass
+		"""for feature in features:
 			if feature=='checkpoint':
 				self.checkpoint=True
 			elif feature[-5:]=='_wall':
@@ -398,4 +447,4 @@ class Boardspace():
 			elif feature[-3:]=='_cb':
 				self.cb=[True,feature[:-3]]
 			elif feature[-6:]=='_laser':
-				self.lasers.append(feature[:-6])
+				self.lasers.append(feature[:-6])"""
