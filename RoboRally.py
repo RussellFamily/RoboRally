@@ -4,6 +4,7 @@ import yaml
 import pygame
 import numpy as np
 import math
+import weakref as wr
 #Classes used in the game
 ###########################
 #Game Object that runs the display, handling updates to the screen
@@ -14,9 +15,26 @@ class Display():
 		self.screensize=(1200,1200)
 		self.screen=pygame.display.set_mode(self.screensize)
 		self.board=board
+		
+		
+		
+		
+	def blitscreen(self,Game):
+		self.screen.fill((0,0,0))
+		for row in range(12):
+			for col in range(12):
+				image=self.board.images_dict[self.board.board_dict[(row,col)].boardtile]
+				self.screen.blit(image,(row*100,col*100))
+		for player in Game.playerlist:
+			self.screen.blit(player.robot.image,(player.robot.position[0]*100,player.robot.position[1]*100))
+		pygame.display.update()	
+		
 	#currently the blitscreen needs the positions of the robots, so i'm gonna grab i
 	#it from the Game object, there is probably a better way to do this
-	def blitscreen(self,Game):
+	#now defunct blitscreen function
+	#instead load images upon game creation, instead of loading images
+	#everytime we call the blitscreen function
+	"""def blitscreen(self,Game):
 		self.screen.fill((0,0,0))
 		for row in range(len(self.board)):
 			for col in range(len(self.board[row])):
@@ -28,7 +46,7 @@ class Display():
 			reducedimage=pygame.transform.scale(image,(100,100))
 			self.screen.blit(reducedimage,(player.robot.position[0]*100,player.robot.position[1]*100))
 
-		pygame.display.update()
+		pygame.display.update()"""
 		
 ###########################
 #Game object that starts each game and controls game flow
@@ -188,8 +206,11 @@ class Game():
 		#CODE FOR BASIC BOARD
 		#board=[['blank']*12]*12
 		#self.display=Display(board)
-
 		
+		
+		#implement blank board, needs to be changed to alternating boards later
+		self.board=Board('test_all_blank')
+		self.display=Display(self.board)
 		#Convert board dict to usable input
 		#TODO
 		
@@ -327,7 +348,7 @@ class Robot():
 
 	def __init__(self,robot_name):
 		self.robot_name=robot_name
-		#import image used for robot
+		self.image=self.load_image()
 		self.damage=0
 		self.registers=self.initiate_registers()
 		self.shutdown=False
@@ -337,6 +358,9 @@ class Robot():
 		self.position=np.array([0,0])
 		self.direction=np.array([0,0])
 
+	def load_image(self):
+		image=pygame.transform.scale(pygame.image.load('Images/Robots/'+self.robot_name+'.jpg'),(100,100))
+		return image
 
 	def initiate_registers(self):
 		reg={}
@@ -372,16 +396,26 @@ class Robot():
 		else:
 			print 'NOT A VALID MOVE TYPE'
 	
-	#this movement function simply will move a robot one square, it will not check for boundaries that will hinder movement or other robots, or walls beyond other robots
-	def move_one_square(self,backup=False):
+	#time to include collision code for other robots as well as walls
+	#other robots should be pushed one square when moved into the way of another robot, and should stop when a movement would coincide with a wall
+	#this needs to be recursively called for each robot that may
+	def move_one_square(self,backup=False,direction=self.direction):
+		#check if the boundary in the direction of movement is a wall - identified by feature in boardspace parameter
+		#lookup key for the current boardspace of the robot
+		current_space=
 		if backup==False:
-			self.position=self.position+self.direction
+			self.position=self.position+direction
 		else:
-			self.position=self.position-self.direction
+			self.position=self.position-direction
 	def rotate_robot(self,theta):
+		#rotate direction vector of the robot
 		self.direction=self.rotate_vector(self.direction,theta)
+		#robot the image of the robot to reflect the rotation of the robot
+		self.image=pygame.transform.rotate(self.image,-1*theta)
 	
 	#function that handles rotation of a vector by 90,-90, or 180 degrees and returns the resulting vector
+	#reminder, since the convention of pygame is to treat the origin as the upper left corner,
+	#we are using an inverted unit circle, so the signs are flipped for rotations
 	def rotate_vector(self, dir_array,theta_deg):
 		theta_rad=math.radians(theta_deg)
 		rotation_vector=np.array([[math.cos(theta_rad),-math.sin(theta_rad)],[math.sin(theta_rad),math.cos(theta_rad)]])
@@ -407,19 +441,23 @@ class Board():
 	def __init__(self,boardname):
 		self.boardname=boardname
 		self.board_dict=self.load_board(boardname)
+		self.images_dict=self.load_images()
 
 	#load yaml'd dictionary of board elements into an array
-	def load_board(boardname):
+	def load_board(self,boardname):
 		loaded_dict=yaml.load(open("Boards/"+boardname+"/board_config.txt").read()[:-1])
 		bdict={}
 		for key,value in loaded_dict.iteritems():
-			bdict[key]=Boardspce(key,value[0],value[1])
+			bdict[key]=Boardspace(key,value[0],value[1])
 		return bdict
 		
 	#currently load all board elements into 	
-	def load_images():
-		board_spaces=['blank','checkpoint-1','checkpoint-2',]
-		
+	def load_images(self):
+		board_spaces=['blank','checkpoint-1','checkpoint-2','fast','flag','laser','pit','slow','wall']
+		image_dict={}
+		for space in board_spaces:
+			image_dict[space]=pygame.transform.scale(pygame.image.load('Images/Board_Elements/'+space+'.jpg'),(100,100))
+		return image_dict
 ###########################
 #Board game space used to store the location and properties of that space
 ###########################
@@ -435,8 +473,11 @@ class Boardspace():
 		self.Flag=None
 		self.strip_features()
 
-	def_load_image
-
+	
+	#notes for feature coding
+	#all features will be coded into the features function as a dictionary
+	#walls will be keyed by the word 'walls', then following a list of all walls in that board space, identified by tuples as the direction of the square
+	#lasers will be keyed similarly, with instead a tuple of the initial laser point - the board will need to determine which squares the laser passes through and where it terminates
 	def strip_features(self):
 		pass
 		"""for feature in features:
