@@ -137,23 +137,27 @@ class Game():
 
 		self.assign_registers()
 		
+		#print final registers
+		for player in self.playerlist:
+			print player.name
+			player.print_registers()
 		#time to execute all of the moves register by register
 		#execute movement for each register phase
 		#require input to begin first movement
+		
 		raw_input('Press any key to start movement')
 		for i in range(1,6):
 			#execute player moves
 			self.execute_move_phase(i)
 			#print position to check if update is working
 			for player in self.playerlist:
-				print player.robot.position
+				print player.robot.position,player.robot.direction
 			
 			#check for death offboard
 			self.check_offboard()
 			#update board
 			self.display.blitscreen(self)
 			#require button to go to next phase
-			raw_input('press any key to continue')
 	#check if players' robots ended up offboard		
 	def check_offboard(self):
 		for player in self.playerlist:
@@ -246,14 +250,112 @@ class Game():
 	#Execute move actions of all robots by sorting moves of active players
 	def execute_move_phase(self,register):
 		moveorder=[player for player in self.playerlist if player.robot.dead==False and player.robot.shutdown==False]
-		moveorder=sorted(moveorder,key=lambda player:player.robot.registers[register].card.priority)
+		moveorder=sorted(moveorder,key=lambda player:player.robot.registers[register].card.priority,reverse=True)
+		
 		for player in moveorder:
-			#execute_move(player.robot.registers[register].card.cardtype)
-			player.robot.execute_move(register)
-	
-	
-	
+			
 
+			#execute_move(player.robot.registers[register].card.cardtype)
+			self.execute_move(register,player.robot)
+			self.display.blitscreen(self)
+			raw_input('press any key to continue')
+
+	
+	
+	#move functions are now handled by the Game class, so that it can handle collisions	
+	#Execute individual move action specified by a movement card
+	#the steps to be performed for each is listed here
+	#for now, movement will be confined to a grid with no restrictions.  Collisions for walls when moving will be handled later
+	#probably need another function to handle what happens during a move
+	def execute_move(self,register,robot):
+		movetype=robot.registers[register].card.cardtype
+		if movetype=='Move_3':
+			for i in range(3):
+				temp=self.move_one_square(robot,robot.direction)
+		elif movetype=='Move_2':
+			for i in range(2):
+				temp=self.move_one_square(robot,robot.direction)
+		elif movetype=='Move_1':
+			for i in range(1):
+				temp=self.move_one_square(robot,robot.direction)
+		elif movetype=='Backup':
+			backup_dir=robot.direction*-1
+			temp=self.move_one_square(robot,backup_dir,backup=True)
+		#since the convention of pygame is to treat the origin in the upper left corner,
+		#the rotation is inverted from the unit circle, hence angle changes
+		elif movetype=='Rotate_Right':
+			self.rotate_robot(90,robot)
+		elif movetype=='Rotate_Left':
+			self.rotate_robot(-90,robot)
+		elif movetype=='U-turn':
+			self.rotate_robot(180,robot)
+		else:
+			print 'NOT A VALID MOVE TYPE'
+	
+	#time to include collision code for other robots as well as walls
+	#other robots should be pushed one square when moved into the way of another robot, and should stop when a movement would coincide with a wall
+	#this needs to be recursively called for each robot that may
+	def move_one_square(self,robot,direction,backup=False):
+		
+		#first test to see if colliding into wall, as a robot in the next square is not push if a wall seperates them
+		wall_collision=False
+		current_position=robot.position
+		destination_position=current_position+direction
+		try:
+			if tuple(direction) in self.board.board_dict[tuple(current_position)].walls:
+				wall_collision=True
+			else:
+				if tuple(destination_position) in self.board.board_dict:
+					if tuple(direction*-1) in self.board.board_dict[tuple(destination_position)].walls:
+						wall_collision=True
+		except:
+			print 'curpos',current_position
+			print 'robdir',robot.direction
+			print 'dir',direction
+			
+			
+		#test for collision of robots
+		if wall_collision==False:
+			robot_collision=False
+			colliding_robot=None
+			for player in self.playerlist:
+				if tuple(player.robot.position)==tuple(robot.position+direction):
+					robot_collision=True
+					colliding_robot=player.robot
+					#can only be one, so we need to break the loop
+					break
+			if robot_collision==True:
+				collision_result=self.move_one_square(colliding_robot,direction)
+				if collision_result=='wall':
+					wall_collsion=True
+
+		#step by step each robot so we know where robots are getting moved
+		x=raw_input('test the order of collisions')
+
+
+		if wall_collision==True:
+			return 'wall'
+		else:
+			robot.position=robot.position+direction
+
+			return 'no_wall'
+		
+	def rotate_robot(self,theta,robot):
+		#rotate direction vector of the robot
+		robot.direction=self.rotate_vector(robot.direction,theta)
+		#robot the image of the robot to reflect the rotation of the robot
+		robot.image=pygame.transform.rotate(robot.image,-1*theta)
+	#function that handles rotation of a vector by 90,-90, or 180 degrees and returns the resulting vector
+	#reminder, since the convention of pygame is to treat the origin as the upper left corner,
+	#we are using an inverted unit circle, so the signs are flipped for rotations
+	def rotate_vector(self, dir_array,theta_deg):
+		theta_rad=math.radians(theta_deg)
+		rotation_vector=np.array([[math.cos(theta_rad),-math.sin(theta_rad)],[math.sin(theta_rad),math.cos(theta_rad)]])
+		final_vector=rotation_vector.dot(dir_array)
+		print 'ROTATION:',final_vector,np.around(final_vector,0)
+		
+		return np.around(final_vector,0)
+		
 ###########################
 #Card object is used by robots to move or rotate, can either be in a deck, discard, hand, or register (locked or unlocked)
 ###########################
@@ -367,60 +469,9 @@ class Robot():
 		for i in range(1,6):
 			reg[i]=Register(i)
 		return reg
-		
-	#Execute individual move action specified by a movement card
-	#the steps to be performed for each is listed here
-	#for now, movement will be confined to a grid with no restrictions.  Collisions for walls when moving will be handled later
-	#probably need another function to handle what happens during a move
-	def execute_move(self,register):
-		movetype=self.registers[register].card.cardtype
-		if movetype=='Move_3':
-			for i in range(3):
-				self.move_one_square()
-		elif movetype=='Move_2':
-			for i in range(2):
-				self.move_one_square()
-		elif movetype=='Move_1':
-			for i in range(1):
-				self.move_one_square()
-		elif movetype=='Backup':
-			self.move_one_square(backup=True)
-		#since the convention of pygame is to treat the origin in the upper left corner,
-		#the rotation is inverted from the unit circle, hence angle changes
-		elif movetype=='Rotate_Right':
-			self.rotate_robot(90)
-		elif movetype=='Rotate_Left':
-			self.rotate_robot(-90)
-		elif movetype=='U-turn':
-			self.rotate_robot(180)
-		else:
-			print 'NOT A VALID MOVE TYPE'
 	
-	#time to include collision code for other robots as well as walls
-	#other robots should be pushed one square when moved into the way of another robot, and should stop when a movement would coincide with a wall
-	#this needs to be recursively called for each robot that may
-	def move_one_square(self,backup=False,direction=self.direction):
-		#check if the boundary in the direction of movement is a wall - identified by feature in boardspace parameter
-		#lookup key for the current boardspace of the robot
-		current_space=
-		if backup==False:
-			self.position=self.position+direction
-		else:
-			self.position=self.position-direction
-	def rotate_robot(self,theta):
-		#rotate direction vector of the robot
-		self.direction=self.rotate_vector(self.direction,theta)
-		#robot the image of the robot to reflect the rotation of the robot
-		self.image=pygame.transform.rotate(self.image,-1*theta)
+
 	
-	#function that handles rotation of a vector by 90,-90, or 180 degrees and returns the resulting vector
-	#reminder, since the convention of pygame is to treat the origin as the upper left corner,
-	#we are using an inverted unit circle, so the signs are flipped for rotations
-	def rotate_vector(self, dir_array,theta_deg):
-		theta_rad=math.radians(theta_deg)
-		rotation_vector=np.array([[math.cos(theta_rad),-math.sin(theta_rad)],[math.sin(theta_rad),math.cos(theta_rad)]])
-		final_vector=rotation_vector.dot(dir_array)
-		return np.around(final_vector,0)
 ###########################
 #Register is an object owned by a robot which represents a container for a phase action and register lock
 ###########################

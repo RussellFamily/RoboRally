@@ -7,7 +7,7 @@
 # checkpoint: indicates a checkpoint is in this location.
 import yaml
 
-board={(1,1):['s_wall','w_wall'],
+board={(1,1):[{walls:[(0,1)]}],
 (1,2):['w_wall','we_laser'],
 (1,3):['w_wall','n_wall'],
 (2,1):['sw_cb'],
