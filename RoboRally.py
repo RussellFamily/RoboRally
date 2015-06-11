@@ -16,9 +16,6 @@ class Display():
 		self.screen=pygame.display.set_mode(self.screensize)
 		self.board=board
 		
-		
-		
-		
 	def blitscreen(self,Game):
 		self.screen.fill((0,0,0))
 		for row in range(12):
@@ -57,72 +54,77 @@ class Game():
 	def __init__(self):
 		self.playerlist=[]
 		self.deck=Deck()
+		self.end=False
 
 	def run_game(self):
 		#get the board and players setup to play
 		self.game_setup()
 		#run game
-		self.play_game()
+		While not self.end
+			self.play_game_round()
+		print 'GAME OVER!!!!!'
 		
-		
+	def read_player_choices(self,player):
+		while True:
+			#print hand and registers
+			player.print_hand()
+			player.print_registers()
+					
+			try:
+					card_choice=int(raw_input("Please choose a card you want to play based on the hand above: "))
+			except:
+				print 'The input was not a valid integer, please try again\n'
+				continue
+			if card_choice not in range(len(player.hand)):
+				print 'The integer was not a valid answer, please try again\n'
+				continue
+						
+			try:
+				reg_choice=int(raw_input("Which register do you want to put this card into?: "))
+			except:
+				print 'The input was not valid'
+				continue
+			if reg_choice not in range(1,6):
+				print 'not a valid register choice'
+				continue
+			elif player.robot.registers[reg_choice].card != None:
+				if player.robot.registers[reg_choice].register_lock==True:
+					print 'this register is locked, and cannot be changed'
+					continue
+				else:
+					player.hand.append(player.robot.registers[reg_choice].card)
+					
+			player.robot.registers[reg_choice].card=player.hand[card_choice]
+			#is it pop or drop?
+			player.hand.pop(card_choice)
+					
+			filled_regs=0
+			for reg in player.robot.registers:
+				if player.robot.registers[reg].card!=None:
+					filled_regs+=1
+			answer=''
+			if filled_regs==5:
+				player.print_hand()
+				player.print_registers()
+				while True:
+					answer=raw_input('Is this your final choice for registers (y/n)?')
+					if answer=='y':
+						break
+					if answer=='n':
+						break
+					else:
+						print 'not a valid response, enter again'
+			if answer=='y':
+				break
+	
+	
 	def assign_registers(self):
 		for player in self.playerlist:
 			if not player.robot.shutdown and not player.robot.dead:
-				while True:
-					#print hand and registers
-					player.print_hand()
-					player.print_registers()
-					
-					try:
-						card_choice=int(raw_input("Please choose a card you want to play based on the hand above: "))
-					except:
-						print 'The input was not a valid integer, please try again\n'
-						continue
-					if card_choice not in range(len(player.hand)):
-						print 'The integer was not a valid answer, please try again\n'
-						continue
-						
-					try:
-						reg_choice=int(raw_input("Which register do you want to put this card into?: "))
-					except:
-						print 'The input was not valid'
-						continue
-					if reg_choice not in range(1,6):
-						print 'not a valid register choice'
-						continue
-					elif player.robot.registers[reg_choice].card != None:
-						if player.robot.registers[reg_choice].register_lock==True:
-							print 'this register is locked, and cannot be changed'
-							continue
-						else:
-							player.hand.append(player.robot.registers[reg_choice].card)
-					
-					player.robot.registers[reg_choice].card=player.hand[card_choice]
-					#is it pop or drop?
-					player.hand.pop(card_choice)
-					
-					filled_regs=0
-					for reg in player.robot.registers:
-						if player.robot.registers[reg].card!=None:
-							filled_regs+=1
-					answer=''
-					if filled_regs==5:
-						player.print_hand()
-						player.print_registers()
-						while True:
-							answer=raw_input('Is this your final choice for registers (y/n)?')
-							if answer=='y':
-								break
-							if answer=='n':
-								break
-							else:
-								print 'not a valid response, enter again'
-
-					if answer=='y':
-						break
+				self.read_player_choices(player)
 		
 		
-	def play_game(self):
+	def play_game_round(self):
 		
 		#iterate through rounds of play
 		#create display with each players robot
@@ -158,6 +160,54 @@ class Game():
 			#update board
 			self.display.blitscreen(self)
 			#require button to go to next phase
+		# if a robot is not dead and was previously shutdown, remove the shutdown condition
+		for player in self.playerlist:
+			if player.robot.shutdown==True and player.robot.dead==False:
+				player.robot.shutdown=False
+		
+		#for those robots that have died, determine respawn positions
+		for player in self.playerlist:
+			if player.robot.dead==True:
+				#in case a robot died while shutdown, remove the shutdown flag
+				player.robot.shutdown=False
+				#robot comes back at archive location
+				player.robot.position=player.robot.archive
+				#determine whether they want to come in shut down or up and running
+				print 'Player '+player.name+', You can choose to:'
+				print '1. Come back into play shutdown for the following round with 0 damage'
+				print '2. Come back into play active for the following round with 2 damage'
+				While True:
+					after_dead_result=raw_input('How would you like to come back into play? (Please select 1 or 2)'
+					if after_dead_result not in [1,2]:
+						print 'Invalid response. Please enter 1 or 2.'
+					else:
+						break
+				if after_dead_result==1:
+					player.robot.shutdown==True
+				#determine what direction they will be facing
+				print 'You need to select a direction upon respawn.'
+				print '1. Up'
+				print '2. Down'
+				print '3. Left'
+				print '4. Right'
+				While True:
+					after_dead_direction=('Which direction would you like to face?')
+					if after_dead_direction not in [1,2,3,4]:
+						print 'Invalid response. Please enter 1,2,3, or 4'
+					else:
+						switch(after_dead_direction){
+							case 1:
+								player.robot.direction=np.array([0,1])
+							case 2:
+								player.robot.direction=np.array([0,-1])
+							case 3:
+								player.robot.direction=np.array([-1,0])
+							case 4:
+								player.robot.direction=np.array([1,0])
+							default:
+								print 'ERROR IN ASSIGNING DIRECTION'
+								player.robot.direction=np.array([-1,-1])
+						break
 	#check if players' robots ended up offboard		
 	def check_offboard(self):
 		for player in self.playerlist:
@@ -167,6 +217,7 @@ class Game():
 			else:
 				player.robot.dead==True
 				print player.name+ "'s robot is off the board!\n"
+				player.robot.position=(-1,-1)
 			
 
 	def game_setup(self):
@@ -230,6 +281,7 @@ class Game():
 		for i,player in enumerate(self.playerlist):
 			player.robot.position=np.array([i,0])
 			player.robot.direction=np.array([0,1])
+			player.robot.archive=player.robot.position
 		
 		
 	#Function that deals out cards to all players
@@ -253,12 +305,12 @@ class Game():
 		moveorder=sorted(moveorder,key=lambda player:player.robot.registers[register].card.priority,reverse=True)
 		
 		for player in moveorder:
-			
-
-			#execute_move(player.robot.registers[register].card.cardtype)
-			self.execute_move(register,player.robot)
-			self.display.blitscreen(self)
-			raw_input('press any key to continue')
+			#test to see if a robot is dead, if it is then it doesn't do its move
+			if player.robot.dead==False:
+				#execute_move(player.robot.registers[register].card.cardtype)
+				self.execute_move(register,player.robot)
+				self.display.blitscreen(self)
+				raw_input('press any key to continue')
 
 	
 	
@@ -359,20 +411,17 @@ class Game():
 ###########################
 #Card object is used by robots to move or rotate, can either be in a deck, discard, hand, or register (locked or unlocked)
 ###########################
+
 class Card():
 	#initialize object
 	def __init__(self,priority,cardtype):
 		self.priority=priority
 		self.cardtype=cardtype
-		
-		
-			
-		
-		
-		
+	
 ###########################
 #Deck object used by the game to control the movement cards.  Contains the discard and draw pile, and can be shuffled
 ###########################
+
 class Deck():
 
 	#create draw
@@ -414,10 +463,10 @@ class Deck():
 			self.draw,self.discard=self.discard,self.draw
 		random.shuffle(self.draw)
 
-
 ###########################
 #Player Object is created by the game to represent an individual player.  Has a robot and deck attached to it.
 ###########################
+
 class Player():
 
 	def __init__(self,name,robot_name='None'):
@@ -446,6 +495,7 @@ class Player():
 ###########################
 #Robot Object is created under a player.  It controls its registers, spot on the board, facing, and damage.
 ###########################
+
 class Robot():
 
 	def __init__(self,robot_name):
@@ -459,6 +509,7 @@ class Robot():
 		#positional and directional information for each bot
 		self.position=np.array([0,0])
 		self.direction=np.array([0,0])
+		self.archive=np.array([0,0])
 
 	def load_image(self):
 		image=pygame.transform.scale(pygame.image.load('Images/Robots/'+self.robot_name+'.jpg'),(100,100))
@@ -470,11 +521,10 @@ class Robot():
 			reg[i]=Register(i)
 		return reg
 	
-
-	
 ###########################
 #Register is an object owned by a robot which represents a container for a phase action and register lock
 ###########################
+
 class Register():
 
 	def __init__(self,number):
@@ -483,10 +533,10 @@ class Register():
 		self.card=None
 		
 		
-		
 ###########################
 #Board will contain an object of board spaces, stored in a dictionary keyed by an (x,y) pair
 ###########################
+
 class Board():
 
 	def __init__(self,boardname):
@@ -509,9 +559,11 @@ class Board():
 		for space in board_spaces:
 			image_dict[space]=pygame.transform.scale(pygame.image.load('Images/Board_Elements/'+space+'.jpg'),(100,100))
 		return image_dict
+
 ###########################
 #Board game space used to store the location and properties of that space
 ###########################
+
 class Boardspace():
 
 	def __init__(self,location,boardtile,features):
