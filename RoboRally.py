@@ -117,13 +117,24 @@ class Game():
 			if answer=='y':
 				break
 	
-	
 	def assign_registers(self):
 		for player in self.playerlist:
 			if not player.robot.shutdown and not player.robot.dead:
 				self.read_player_choices(player)
 		
-		
+	#function that will restore cards to the discard pile out of players hands, except those that are shutdown	
+	def cleanup(self):
+		for player in self.playerlist
+			
+			for card in player.hand:
+				self.deck.discard=self.deck.discard+player.hand
+				player.hand=[]
+			if player.robot.shutdown==False:
+				for register_num, register in player.robot.registers.iteritems():
+					if register.register_lock==False:
+						self.deck.append(register.card)
+						register.card=None
+	
 	def play_game_round(self):
 		
 		#iterate through rounds of play
@@ -131,18 +142,39 @@ class Game():
 		self.display.blitscreen(self)
 		#first step is to deal out cards to all players
 		self.deal_hands()
-		
 		#next, each player has to choose which order of cards they will be dealing out
 		#for the first iteration, each player will take turns individually choosing all of his/her cards through the terminal
 		#they will be told what cards they have in hand, which registers currently have cards chosen in them, and which ones are locked
 		#finally they will confirm if the choices are what they will make them out to be
-
 		self.assign_registers()
-		
-		#print final registers
+		#allow each player to shutdown their robot for the following turn:
+		self.determine_shutdown()
+		#execute all of the register phases
+		self.complete_registers
+		#update shutdown flags for robots
+		self.update_shutdown()
+		#respawn any dead robots
+		self.respawn_dead_robots()
+		#discard unlocked registers and extra cards in hands to all players
+		self.cleanup()
+	
+	def determine_shutdown(self):
+		for player in self.playerlist:
+			while True:
+				shutdown_answer=raw_input('Player '+player+': Do you wish to shutdown for the following round? (y|n)')
+				if shutdown_answer in ['y','n']:
+					if shutdown_answer=='y':
+						player.declare_shutdown=True
+					break
+				else:
+					print 'Invalid response'
+	
+	def complete_registers(self):
+		#print final registers before executing phases
 		for player in self.playerlist:
 			print player.name
 			player.print_registers()
+		
 		#time to execute all of the moves register by register
 		#execute movement for each register phase
 		#require input to begin first movement
@@ -157,14 +189,27 @@ class Game():
 			
 			#check for death offboard
 			self.check_offboard()
+			
 			#update board
 			self.display.blitscreen(self)
-			#require button to go to next phase
+	
+		
+	#updates robots who were shut down and who are about to shut down
+	def update_shutdown(self):
 		# if a robot is not dead and was previously shutdown, remove the shutdown condition
 		for player in self.playerlist:
 			if player.robot.shutdown==True and player.robot.dead==False:
 				player.robot.shutdown=False
-		
+		# for all robots preparing to shutdown, change their condition to shutdown, remove their damage, and set register lock flags to False
+		for player in self.playerlist:
+			if player.declare_shutdown==True and player.robot.dead==False:
+				player.declare_shutdown=False
+				player.robot.shutdown=True
+				player.robot.damage=0
+				for register_num,register in player.robot.register.iteritems():
+					register.register_lock=False
+	
+	def respawn_dead_robots(self):
 		#for those robots that have died, determine respawn positions
 		for player in self.playerlist:
 			if player.robot.dead==True:
@@ -208,6 +253,7 @@ class Game():
 								print 'ERROR IN ASSIGNING DIRECTION'
 								player.robot.direction=np.array([-1,-1])
 						break
+	
 	#check if players' robots ended up offboard		
 	def check_offboard(self):
 		for player in self.playerlist:
@@ -473,6 +519,7 @@ class Player():
 		self.name=name
 		self.robot=Robot(robot_name)
 		self.hand=[]
+		self.declare_shutdown=False
 	
 	#prints the current hand of the player	
 	def print_hand(self):
@@ -575,6 +622,7 @@ class Boardspace():
 		self.checkpoint=False
 		self.Flag=None
 		self.strip_features()
+		
 
 	
 	#notes for feature coding
