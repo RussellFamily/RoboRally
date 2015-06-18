@@ -1,4 +1,5 @@
 #Modules!
+import sys
 import random
 import yaml
 import pygame
@@ -18,12 +19,21 @@ class Display():
 		
 	def blitscreen(self,Game):
 		self.screen.fill((0,0,0))
+		#blit boardtiles
 		for row in range(12):
 			for col in range(12):
+				#blit the board tile
 				image=self.board.images_dict[self.board.board_dict[(row,col)].boardtile]
 				self.screen.blit(image,(row*100,col*100))
+				#if there are any walls, blit the walls on top of the tile
+				#this overwrites the tile for now, until transparent pngs get used
+				wall_list=self.board.board_dict[(row,col)].walls
+				for direction in wall_list:
+					blit_image=self.board.determine_wall_orientation(tuple(direction))
+					self.screen.blit(blit_image,(row*100,col*100))
+		#finally, blit player robots
 		for player in Game.playerlist:
-			self.screen.blit(player.robot.image,(player.robot.position[0]*100,player.robot.position[1]*100))
+			self.screen.blit(player.robot.image_dict[tuple(player.robot.direction)],(player.robot.position[0]*100,player.robot.position[1]*100))
 		pygame.display.update()	
 		
 	#currently the blitscreen needs the positions of the robots, so i'm gonna grab i
@@ -60,7 +70,7 @@ class Game():
 		#get the board and players setup to play
 		self.game_setup()
 		#run game
-		While not self.end
+		while not self.end:
 			self.play_game_round()
 		print 'GAME OVER!!!!!'
 		
@@ -124,7 +134,7 @@ class Game():
 		
 	#function that will restore cards to the discard pile out of players hands, except those that are shutdown	
 	def cleanup(self):
-		for player in self.playerlist
+		for player in self.playerlist:
 			
 			for card in player.hand:
 				self.deck.discard=self.deck.discard+player.hand
@@ -132,7 +142,7 @@ class Game():
 			if player.robot.shutdown==False:
 				for register_num, register in player.robot.registers.iteritems():
 					if register.register_lock==False:
-						self.deck.append(register.card)
+						self.deck.discard.append(register.card)
 						register.card=None
 	
 	def play_game_round(self):
@@ -150,7 +160,7 @@ class Game():
 		#allow each player to shutdown their robot for the following turn:
 		self.determine_shutdown()
 		#execute all of the register phases
-		self.complete_registers
+		self.complete_registers()
 		#update shutdown flags for robots
 		self.update_shutdown()
 		#respawn any dead robots
@@ -161,7 +171,7 @@ class Game():
 	def determine_shutdown(self):
 		for player in self.playerlist:
 			while True:
-				shutdown_answer=raw_input('Player '+player+': Do you wish to shutdown for the following round? (y|n)')
+				shutdown_answer=raw_input('Player '+player.name+': Do you wish to shutdown for the following round? (y|n)')
 				if shutdown_answer in ['y','n']:
 					if shutdown_answer=='y':
 						player.declare_shutdown=True
@@ -186,14 +196,13 @@ class Game():
 			#print position to check if update is working
 			for player in self.playerlist:
 				print player.robot.position,player.robot.direction
-			
-			#check for death offboard
-			self.check_offboard()
-			
+						
 			#update board
 			self.display.blitscreen(self)
 	
-		
+		quitgame=raw_input('Do you wish to quit the game? (q)')
+		if quitgame=='q':
+			sys.exit()
 	#updates robots who were shut down and who are about to shut down
 	def update_shutdown(self):
 		# if a robot is not dead and was previously shutdown, remove the shutdown condition
@@ -206,13 +215,15 @@ class Game():
 				player.declare_shutdown=False
 				player.robot.shutdown=True
 				player.robot.damage=0
-				for register_num,register in player.robot.register.iteritems():
+				for register_num,register in player.robot.registers.iteritems():
 					register.register_lock=False
 	
 	def respawn_dead_robots(self):
 		#for those robots that have died, determine respawn positions
 		for player in self.playerlist:
 			if player.robot.dead==True:
+				#first things first, remove the death flag!
+				player.robot.dead=False
 				#in case a robot died while shutdown, remove the shutdown flag
 				player.robot.shutdown=False
 				#robot comes back at archive location
@@ -221,51 +232,93 @@ class Game():
 				print 'Player '+player.name+', You can choose to:'
 				print '1. Come back into play shutdown for the following round with 0 damage'
 				print '2. Come back into play active for the following round with 2 damage'
-				While True:
-					after_dead_result=raw_input('How would you like to come back into play? (Please select 1 or 2)'
+				
+				
+				#TODO FIX THE rawinput statements to reflect adjusting the value to an integer
+				while True:
+					try:
+						after_dead_result=int(raw_input('How would you like to come back into play? (Please select 1 or 2)'))
+					except:
+						print 'Invalid response. Input was not an integer. The only valid inputs are 1 or 2'
+						continue
 					if after_dead_result not in [1,2]:
 						print 'Invalid response. Please enter 1 or 2.'
 					else:
 						break
 				if after_dead_result==1:
 					player.robot.shutdown==True
+					player.robot.damage=0
+				elif after_dead_result==2:
+					player.robot.damage=2
+				else:
+					print 'ERROR IN RESPAWN PROCESS'
+				#clear register locks if any were locked
+				for register_num,register in player.robot.registers.iteritems():
+					register.register_lock=False	
 				#determine what direction they will be facing
 				print 'You need to select a direction upon respawn.'
 				print '1. Up'
 				print '2. Down'
 				print '3. Left'
 				print '4. Right'
-				While True:
-					after_dead_direction=('Which direction would you like to face?')
+				while True:
+					try:
+						after_dead_direction=int(raw_input('Which direction would you like to face?'))
+					except:
+						print 'Invalid response. The value must be an integer from 1 to 4'
+						continue
+					
 					if after_dead_direction not in [1,2,3,4]:
 						print 'Invalid response. Please enter 1,2,3, or 4'
+						continue
 					else:
-						switch(after_dead_direction){
-							case 1:
-								player.robot.direction=np.array([0,1])
-							case 2:
-								player.robot.direction=np.array([0,-1])
-							case 3:
-								player.robot.direction=np.array([-1,0])
-							case 4:
-								player.robot.direction=np.array([1,0])
-							default:
-								print 'ERROR IN ASSIGNING DIRECTION'
-								player.robot.direction=np.array([-1,-1])
+						if after_dead_direction==1:
+							player.robot.direction=np.array([0,-1])
+						elif after_dead_direction==2:
+							player.robot.direction=np.array([0,1])
+						elif after_dead_direction==3:
+							player.robot.direction=np.array([-1,0])
+						elif after_dead_direction==4:
+							player.robot.direction=np.array([1,0])
+						else:
+							print 'ERROR IN ASSIGNING DIRECTION'
+							player.robot.direction=np.array([-1,-1])
 						break
-	
+	#old function, use newer function that does it by robot
 	#check if players' robots ended up offboard		
-	def check_offboard(self):
+	"""def check_offboard(self):
 		for player in self.playerlist:
-			if player.robot.position[0]>=0 and player.robot.position[0]<12 and player.robot.position[1]>=0 and player.robot.position[1]<12:
-				#robot is fine
+			if player.robot.position[0]>=0 and player.robot.position[0]<12 and player.robot.position[1]>=0 and player.robot.position[1]<12 and player.robot.dead==False:
+				#robot is fine or already dead
 				pass
 			else:
-				player.robot.dead==True
+				player.robot.dead=True
 				print player.name+ "'s robot is off the board!\n"
 				player.robot.position=(-1,-1)
-			
-
+				player.robot.num_death+=1"""
+	
+	def check_offboard(self,robot):
+		if robot.dead==True:
+			#robot is already dead, so do nothing
+			pass
+		elif robot.position[0]>=0 and robot.position[0]<12 and robot.position[1]>=0 and robot.position[1]<12:
+			#robot is on the board
+			pass
+		else:
+			#robot was alive, and now must be offboard
+			robot.dead=True
+			print robot.robot_name+ " is off the board!\n"
+			robot.position=(-1,-1)
+			robot.num_death+=1
+	
+	#checks if the robot has fallen into pit
+	def check_pit(self,robot):
+		if robot.dead==False:
+			if self.board.board_dict[tuple(robot.position)].pit==True:
+				robot.dead=True
+				print robot.name+' fell into a pit!\n'
+				player.robot.position=(-1,-1)
+	
 	def game_setup(self):
 		#Determine how many players are going to be playing the game
 		num_allowed_players=[2,3,4]
@@ -310,7 +363,7 @@ class Game():
 		
 		
 		#implement blank board, needs to be changed to alternating boards later
-		self.board=Board('test_all_blank')
+		self.board=Board('test_walls')
 		self.display=Display(self.board)
 		#Convert board dict to usable input
 		#TODO
@@ -328,7 +381,6 @@ class Game():
 			player.robot.position=np.array([i,0])
 			player.robot.direction=np.array([0,1])
 			player.robot.archive=player.robot.position
-		
 		
 	#Function that deals out cards to all players
 	def deal_hands(self):
@@ -394,7 +446,9 @@ class Game():
 	#other robots should be pushed one square when moved into the way of another robot, and should stop when a movement would coincide with a wall
 	#this needs to be recursively called for each robot that may
 	def move_one_square(self,robot,direction,backup=False):
-		
+		#test to see if the robot is dead, if it is we won't do any collision testing
+		if robot.dead==True:
+			return 'dead'
 		#first test to see if colliding into wall, as a robot in the next square is not push if a wall seperates them
 		wall_collision=False
 		current_position=robot.position
@@ -407,14 +461,18 @@ class Game():
 					if tuple(direction*-1) in self.board.board_dict[tuple(destination_position)].walls:
 						wall_collision=True
 		except:
+			print robot.robot_name
+			print 'death',robot.dead
 			print 'curpos',current_position
 			print 'robdir',robot.direction
 			print 'dir',direction
+		
+		
 			
-			
+		robot_collision=False
+	
 		#test for collision of robots
 		if wall_collision==False:
-			robot_collision=False
 			colliding_robot=None
 			for player in self.playerlist:
 				if tuple(player.robot.position)==tuple(robot.position+direction):
@@ -427,14 +485,18 @@ class Game():
 				if collision_result=='wall':
 					wall_collsion=True
 
-		#step by step each robot so we know where robots are getting moved
-		x=raw_input('test the order of collisions')
+		#print out robot variables to understand what the variables are after each movement
+		print robot.robot_name,'wall_collision',wall_collision,'robot_collision',robot_collision,'position',robot.position
 
 
 		if wall_collision==True:
 			return 'wall'
 		else:
+			#move robot one square
 			robot.position=robot.position+direction
+			#test for death conditions
+			self.check_offboard(robot)
+			self.check_pit(robot)
 
 			return 'no_wall'
 		
@@ -442,7 +504,7 @@ class Game():
 		#rotate direction vector of the robot
 		robot.direction=self.rotate_vector(robot.direction,theta)
 		#robot the image of the robot to reflect the rotation of the robot
-		robot.image=pygame.transform.rotate(robot.image,-1*theta)
+		#robot.image=pygame.transform.rotate(robot.image,-1*theta)
 	#function that handles rotation of a vector by 90,-90, or 180 degrees and returns the resulting vector
 	#reminder, since the convention of pygame is to treat the origin as the upper left corner,
 	#we are using an inverted unit circle, so the signs are flipped for rotations
@@ -450,7 +512,6 @@ class Game():
 		theta_rad=math.radians(theta_deg)
 		rotation_vector=np.array([[math.cos(theta_rad),-math.sin(theta_rad)],[math.sin(theta_rad),math.cos(theta_rad)]])
 		final_vector=rotation_vector.dot(dir_array)
-		print 'ROTATION:',final_vector,np.around(final_vector,0)
 		
 		return np.around(final_vector,0)
 		
@@ -548,6 +609,7 @@ class Robot():
 	def __init__(self,robot_name):
 		self.robot_name=robot_name
 		self.image=self.load_image()
+		self.image_dict=self.create_image_dict()
 		self.damage=0
 		self.registers=self.initiate_registers()
 		self.shutdown=False
@@ -568,7 +630,18 @@ class Robot():
 			reg[i]=Register(i)
 		return reg
 	
-###########################
+	#instead of rotating the robots images, for now simply prerotate all directions and call the one that matches the value of the robot's direction
+	def create_image_dict(self):
+		image_dict={}
+		image_dict[(0,1)]=self.image
+		image_dict[(0,-1)]=pygame.transform.rotate(self.image,180)
+		image_dict[(1,0)]=pygame.transform.rotate(self.image,90)
+		image_dict[(-1,0)]=pygame.transform.rotate(self.image,-90)
+		return image_dict
+
+
+		
+##########################
 #Register is an object owned by a robot which represents a container for a phase action and register lock
 ###########################
 
@@ -606,7 +679,21 @@ class Board():
 		for space in board_spaces:
 			image_dict[space]=pygame.transform.scale(pygame.image.load('Images/Board_Elements/'+space+'.jpg'),(100,100))
 		return image_dict
-
+		
+	#have the board control rotations of the wall image when blitting the screen
+	#this may later want to be turned into a dictionary of prerotated images that can be called in the image_dict	
+	def determine_wall_orientation(self,wall_direction):
+		base_image=self.images_dict['wall']
+		if wall_direction==(0,1):
+			return base_image
+		elif wall_direction==(0,-1):
+			return pygame.transform.rotate(base_image,180)
+		elif wall_direction==(1,0):
+			return pygame.transform.rotate(base_image,90)
+		elif wall_direction==(-1,0):
+			return pygame.transform.rotate(base_image,-90)
+		else:
+			print 'WALL IMAGE ERROR'
 ###########################
 #Board game space used to store the location and properties of that space
 ###########################
@@ -621,7 +708,8 @@ class Boardspace():
 		self.cb=[False,None]
 		self.checkpoint=False
 		self.Flag=None
-		self.strip_features()
+		self.strip_features(features)
+		self.pit=False
 		
 
 	
@@ -629,14 +717,17 @@ class Boardspace():
 	#all features will be coded into the features function as a dictionary
 	#walls will be keyed by the word 'walls', then following a list of all walls in that board space, identified by tuples as the direction of the square
 	#lasers will be keyed similarly, with instead a tuple of the initial laser point - the board will need to determine which squares the laser passes through and where it terminates
-	def strip_features(self):
-		pass
-		"""for feature in features:
+	def strip_features(self,features):
+		
+		for feature in features:
 			if feature=='checkpoint':
 				self.checkpoint=True
-			elif feature[-5:]=='_wall':
-				self.walls.append(feature[:-5])
-			elif feature[-3:]=='_cb':
-				self.cb=[True,feature[:-3]]
-			elif feature[-6:]=='_laser':
-				self.lasers.append(feature[:-6])"""
+			elif feature=='wall':
+				self.walls=features[feature]
+			elif feature=='cb':
+				self.cb=[True,'direction?']
+			elif feature=='laser':
+				self.lasers=features[feature]
+			else:
+				print 'INVALID FEATURE SELECTED'
+				print feature
