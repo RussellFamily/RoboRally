@@ -65,6 +65,8 @@ class Game():
 		self.playerlist=[]
 		self.deck=Deck()
 		self.end=False
+		#default setting for now, need to implement selection of flags to place on board, or build it into the board property
+		self.num_flags=5
 
 	def run_game(self):
 		#get the board and players setup to play
@@ -196,10 +198,17 @@ class Game():
 			#print position to check if update is working
 			for player in self.playerlist:
 				print player.robot.position,player.robot.direction
-						
+			#this is where board elements will go
+		
+			#fire the lasers!
+			self.fire_laser_phase()
+			#this is where checkpoint touches will go
+			self.checkpoint_phase()			
 			#update board
 			self.display.blitscreen(self)
-	
+		
+		#currently ask to quit the game, as currently no other function allows for this
+		#allows for a single round of testing and quitting
 		quitgame=raw_input('Do you wish to quit the game? (q)')
 		if quitgame=='q':
 			sys.exit()
@@ -388,7 +397,7 @@ class Game():
 			if player.robot.shutdown==True:
 				pass
 			else:
-				for i in range(10-player.robot.damage):
+				for i in range(9-player.robot.damage):
 					self.deal_card(player)
 
 	#Function used to deal out a single card to a player.  Used to check if deck is also empty when dealing
@@ -410,7 +419,6 @@ class Game():
 				self.display.blitscreen(self)
 				raw_input('press any key to continue')
 
-	
 	
 	#move functions are now handled by the Game class, so that it can handle collisions	
 	#Execute individual move action specified by a movement card
@@ -483,7 +491,7 @@ class Game():
 			if robot_collision==True:
 				collision_result=self.move_one_square(colliding_robot,direction)
 				if collision_result=='wall':
-					wall_collsion=True
+					wall_collision=True
 
 		#print out robot variables to understand what the variables are after each movement
 		print robot.robot_name,'wall_collision',wall_collision,'robot_collision',robot_collision,'position',robot.position
@@ -514,7 +522,119 @@ class Game():
 		final_vector=rotation_vector.dot(dir_array)
 		
 		return np.around(final_vector,0)
-		
+	
+	
+	#need to write a function that handles the laser fire round, both of robots and of board lasers
+	#neither board lasers nor robot lasers pass through a robot, so the laser only fires until it hits a robot, wall, or edge of the board
+	#timing for lasers is simultaneous
+	#for future use of option cards, this is the steps:
+	#1. resolve all damaging weapons first (simultaneously)
+	#2. resolve all moving and other weapons in order of robot priority card numbers
+	#3. if the weapon damages and moves, resolve the damage during step 1, then then effect during step 2
+	# Due to the simultaneous nature of laser fire, a stack will need to be created that stores all robot laser fire that will occur,
+	# then assign all the effects in the stack.
+	# This prevents robots from missing being able to fire due to dying while iterating, and assigns all damage to the robot it is going to hit,
+	# even if there is overkill damage (such as 2 lasers hitting a robot with 9 damage, both should hit it, instead of one killing him then the other
+	# firing free of impedence
+	#The main difference between board and laser fire is the origin square of the laser:
+	#board lasers will hit the square they are in, while robot lasers start in the square in the direction they are facing
+	#(unless there happens to be a wall immediately in the direction he is facing
+	
+	#another note: lasers are being stored as tuples, and locations as numpy arrays.  the function should take
+	#a numpy array in order to do vector addition, and check against a tuple-ized version for value comparison
+	
+	def fire_laser_phase(self):
+		fire_list=self.board_laser_fire()+self.robot_laser_fire()
+		for robot in fire_list:
+			robot.damage+=1
+			print robot.robot_name+' just took a point of laser damage! They have now taken ' + robot.robot_name + ' damage!'
+	
+	
+	#this function currently only handles single laser board fire, needs to be modified for double lasers
+	#these could be stored as two instances of the laser in the board space object? then they can be iterated over
+	def fire_laser(self,location,direction,origin):
+		current_space=location
+		laser_target_flag=False
+		target=None
+		close_wall=direction
+	
+		far_wall=self.rotate_vector(direction,180)
+		#if the origin is a board laser, check the space immediately in front of it, else, check for the edge of the space to begin wall detection
+		if origin=='board':
+			for player in self.playerlist:
+				if tuple(player.robot.position)==tuple(current_space):
+					return player.robot
+		#check for current wall space, check if next space is off board, then advance to next space if not, check closest wall, then check for robot in the square
+		while not laser_target_flag:
+			#check the far wall on the current space
+			if tuple(far_wall) in self.board.board_dict[tuple(current_space)].walls:
+				#laser has hit a wall, and stops
+				laser_target_flag=True
+				continue
+			#check to see if the laser is off the board
+			current_space+=direction
+			if current_space[0]>11 or current_space[0]<0 or current_space[1]>11 or current_space[1]<0:
+				#next space is off board, laser not terminated by wall
+				laser_target_flag=True
+				continue
+			#check close wall of next space
+			if tuple(close_wall) in self.board.board_dict[tuple(current_space)].walls:
+				#laser has hit a wall, and stops
+				laser_target_flag=True
+				continue
+			#finally, check again for robots
+			for player in self.playerlist:
+				if tuple(player.robot.position)==tuple(current_space):
+					return player.robot
+			
+			
+		#if it breaks out after not finding a robot, return None
+		return None	
+	
+	def robot_laser_fire(self):
+		to_fire=[]
+		for player in self.playerlist:
+			if player.robot.dead==False:
+			laser_origin,laser_direction=player.robot.position,player.robot.direction
+			laser_hit=self.fire_laser(laser_origin,laser_direction,'robot')
+			if laser_hit is not None:
+				to_fire.append(laser_hit)
+		return to_fire
+	def board_laser_fire(self):
+		#fire board lasers
+		#array of lasers to be stored on a stack
+		to_fire=[]
+		for laser_loc in self.board.lasers:
+			lasers=self.board.board_dict(tuple(laser_loc))
+			for laser in lasers:
+				laser_origin,laser_direction=laser_loc,laser
+				#board laser vals need to be converted to numpy arrays
+				laser_hit=self.fire_laser(np.array(laser_origin),np.array(laser_direction),'board')
+				if laser_hit is not None:
+					to_fire.append(laser_hit)
+		return to_fire
+
+	#checkpoint phase of the register, allow for robots who are on a checkpoint to update their archive, and touch flags
+	def checkpoint_phase(self):
+		for player in self.playerlist:
+			if self.board.board_dict[tuple(player.robot.position)].flag==True:
+				if player.robot.next_flag==self.board.board_dict[tuple(player.robot.position)].flag_num:
+					print player.robot.robot_name+' has touched Flag ' + player.robot.next_flag+'!'
+					if player.robot.next_flag==self.num_flags:
+						print player.name + ' has touched the last the last flag and won the game! Congrats!'
+						raw_input('Press enter to quit')
+						sys.quit()
+					else:
+						player.robot.next_flag+=1
+			if self.board.board_dict[tuple(player.robot.position)].checkpoint==True:
+				while True:
+					answer=raw_input("You've reached a checkpoint! Do you want to update your archive to this location? (y|n)")
+					if answer not in ['y','n']:
+						print 'Invalid response. Please enter y or n.'
+					elif answer=='y':
+						player.robot.archive=player.robot.position
+				
+
 ###########################
 #Card object is used by robots to move or rotate, can either be in a deck, discard, hand, or register (locked or unlocked)
 ###########################
@@ -619,6 +739,8 @@ class Robot():
 		self.position=np.array([0,0])
 		self.direction=np.array([0,0])
 		self.archive=np.array([0,0])
+		#a variable to store what the next flag to touch is
+		self.next_flag=1
 
 	def load_image(self):
 		image=pygame.transform.scale(pygame.image.load('Images/Robots/'+self.robot_name+'.jpg'),(100,100))
@@ -663,6 +785,7 @@ class Board():
 		self.boardname=boardname
 		self.board_dict=self.load_board(boardname)
 		self.images_dict=self.load_images()
+		self.lasers=[]
 
 	#load yaml'd dictionary of board elements into an array
 	def load_board(self,boardname):
@@ -694,6 +817,15 @@ class Board():
 			return pygame.transform.rotate(base_image,-90)
 		else:
 			print 'WALL IMAGE ERROR'
+
+	#a function that locations and assigns all the board space keys for firing lasers
+	def locate_lasers(self):
+		all_lasers=[]
+		for key, value in self.board_dict.iteritems():
+			if len(value.walls)>0:
+				all_lasers.append(key)
+		return all_lasers
+
 ###########################
 #Board game space used to store the location and properties of that space
 ###########################
@@ -707,7 +839,8 @@ class Boardspace():
 		self.lasers=[]
 		self.cb=[False,None]
 		self.checkpoint=False
-		self.Flag=None
+		self.flag=False
+		self.flag_num=None
 		self.strip_features(features)
 		self.pit=False
 		
