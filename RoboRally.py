@@ -133,9 +133,18 @@ class Game():
 		for player in self.playerlist:
 			if not player.robot.shutdown and not player.robot.dead:
 				self.read_player_choices(player)
-		
+	
+	#ADDED: function also checks for any repairs to be made to robots
+	#only handles single checkpoints for now	
 	#function that will restore cards to the discard pile out of players hands, except those that are shutdown	
 	def cleanup(self):
+		#determine any damage removal from checkpoints
+		for player in self.playerlist:
+			if self.board.board_dict[tuple(player.robot.postition)].checkpoint==True:
+				if player.robot.damage>0:
+					player.robot.heal_damage(1)
+					
+		#cleanup cards for the next round
 		for player in self.playerlist:
 			
 			for card in player.hand:
@@ -191,6 +200,7 @@ class Game():
 		#execute movement for each register phase
 		#require input to begin first movement
 		
+		#execute movement, board elements, lasers, and checkpoints
 		raw_input('Press any key to start movement')
 		for i in range(1,6):
 			#execute player moves
@@ -546,7 +556,7 @@ class Game():
 	def fire_laser_phase(self):
 		fire_list=self.board_laser_fire()+self.robot_laser_fire()
 		for robot in fire_list:
-			robot.damage+=1
+			robot.assign_damage(1)
 			print robot.robot_name+' just took a point of laser damage! They have now taken ' + robot.robot_name + ' damage!'
 	
 	
@@ -634,7 +644,32 @@ class Game():
 					elif answer=='y':
 						player.robot.archive=player.robot.position
 				
-
+	
+	#Board elements! Only working on conveyor belts for this iteration, but it will all be wrapped int the board element function
+	
+	def execute_board_elements(self):
+		
+	#Conveyor Belts!
+	#only need to execute conveyor belt spaces that robots are on, use their keys to check if conveyor belts exist
+	
+	#notes for thoughts behind convention to program conveyor belts:
+	#the trick with conveyor belts is when the following square will rotate the robot in some fashion
+	#to be dynamic, the previous square has no knowledge of the rotation: the robot MUST check the square he is entering
+	#there will be a directional attribute relative to the space that can be checked against to see if the robot is to rotate or not
+	#this attribute needs to be dynamically changed for the boardspace at time of tile creation
+	#as a board tile can have 4 seperate orientations
+	#i can probably leverage the rotation vector function in order to create the correct in vectors
+	# a conveyor belt will have an out vector, as well as in vectors
+	# i believe the way this is programmed that when a conveyor belt merges onto another, it will ALWAYS rotate
+	#but just in case, it will check the origin direction of the robot, see if that has a rotation direction
+	#and if there is a rotation, apply the cooresponding rotation
+	#however, you MUST check whether the next space is a conveyor belt first
+	#QUESTION: will the conveyor belt be its own object to check against?
+	#i believe it should be, and the boardspace links to this object which it can check against
+	#it will mostly be a storage of values relative to the space
+	def execute_conveyor_belts(self):
+	
+	
 ###########################
 #Card object is used by robots to move or rotate, can either be in a deck, discard, hand, or register (locked or unlocked)
 ###########################
@@ -760,9 +795,28 @@ class Robot():
 		image_dict[(1,0)]=pygame.transform.rotate(self.image,90)
 		image_dict[(-1,0)]=pygame.transform.rotate(self.image,-90)
 		return image_dict
-
-
-		
+	
+	def assign_damage(self,damage):
+		for i in range(damage):
+			self.damage+=1
+			if self.damage>=10:
+				self.dead=True
+				self.num_death+=1
+				break
+			elif self.damage>4:
+				register_to_lock=10-self.damage
+				self.registers[register_to_lock].register_lock=True
+	
+	def heal_damage(self,damage):
+		for i in range(damage):
+			if self.damage==0:
+				break
+			elif self.damage<5:
+				self.damage-=1
+			elif self.damage<10:
+				register_to_unlock=10-self.damage
+				self.registers[register_to_unlock].register_lock=False
+				self.damage-=1
 ##########################
 #Register is an object owned by a robot which represents a container for a phase action and register lock
 ###########################
@@ -773,7 +827,6 @@ class Register():
 		self.number=number
 		self.register_lock=False
 		self.card=None
-		
 		
 ###########################
 #Board will contain an object of board spaces, stored in a dictionary keyed by an (x,y) pair
@@ -850,6 +903,13 @@ class Boardspace():
 	#all features will be coded into the features function as a dictionary
 	#walls will be keyed by the word 'walls', then following a list of all walls in that board space, identified by tuples as the direction of the square
 	#lasers will be keyed similarly, with instead a tuple of the initial laser point - the board will need to determine which squares the laser passes through and where it terminates
+	
+	#notes for conveyor belts
+	#conveyor belts should be identified as what type of movement they are, followed by their orientation
+	#types of basic movement names: straight, rotate right, rotate left
+	#more advanced merges: merge straight/left, merge straight/right, merge left/right, merge straight/left/right
+	#how to program merges? need to know direction of origin relative to the square to determine type of rotation if any
+	#solving this will trickle down to the easier parts to program
 	def strip_features(self,features):
 		
 		for feature in features:
@@ -858,9 +918,16 @@ class Boardspace():
 			elif feature=='wall':
 				self.walls=features[feature]
 			elif feature=='cb':
-				self.cb=[True,'direction?']
+				self.cb=[True,]
 			elif feature=='laser':
 				self.lasers=features[feature]
 			else:
 				print 'INVALID FEATURE SELECTED'
 				print feature
+
+########################
+#A class to store an instance of a Conveyor Belt, and the location properties of said piece
+########################
+
+class Conveyor_Belt():
+	def __init__(self,tile_type,tile_orientation)
