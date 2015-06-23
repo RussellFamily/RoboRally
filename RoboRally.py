@@ -23,7 +23,7 @@ class Display():
 		for row in range(12):
 			for col in range(12):
 				#blit the board tile
-				image=self.board.images_dict[self.board.board_dict[(row,col)].boardtile]
+				image=self.board..board_dict[(row,col)].boardtile_image
 				self.screen.blit(image,(row*100,col*100))
 				#if there are any walls, blit the walls on top of the tile
 				#this overwrites the tile for now, until transparent pngs get used
@@ -894,10 +894,15 @@ class Boardspace():
 		self.checkpoint=False
 		self.flag=False
 		self.flag_num=None
+		#define load board tile
+		self.boardtile_image=None
 		self.strip_features(features)
 		self.pit=False
 		
-
+	
+	def load_board_tile(self):
+		if self.boardtile=='cb':
+			pygame.transform.scale(pygame.image.load('Images/Board_Elements/'++'.jpg'),(100,100))
 	
 	#notes for feature coding
 	#all features will be coded into the features function as a dictionary
@@ -910,6 +915,17 @@ class Boardspace():
 	#more advanced merges: merge straight/left, merge straight/right, merge left/right, merge straight/left/right
 	#how to program merges? need to know direction of origin relative to the square to determine type of rotation if any
 	#solving this will trickle down to the easier parts to program
+	
+	def setup_boardspace(self,features):
+		if self.boardtile=='cb':
+			
+		elif self.boardtile=='blank':
+			
+		elif self.boardtile=='pit':
+	
+		elif self.
+		
+	#this function will now check for walls, lasers, and flags in the features
 	def strip_features(self,features):
 		
 		for feature in features:
@@ -918,16 +934,39 @@ class Boardspace():
 			elif feature=='wall':
 				self.walls=features[feature]
 			elif feature=='cb':
-				self.cb=[True,]
+				self.cb=[True,Conveyor_Belt(features[feature])]
+				#rotate_image
+				self.rotate_image(features[feature]['orientation'])
 			elif feature=='laser':
 				self.lasers=features[feature]
 			else:
+				
 				print 'INVALID FEATURE SELECTED'
 				print feature
-
+	
+	def rotate_image(self,orientation):
+		if orientation==(0,1):
+			pass
+		elif orientation==(0,-1):
+			self.boardtile_image= pygame.transform.rotate(self.boardtile_image,180)
+		elif orientation==(1,0):
+			self.boardtile_image= pygame.transform.rotate(self.boardtile_image,90)
+		elif orientation==(-1,0):
+			self.boardtile_image= pygame.transform.rotate(self.boardtile_image,-90)
+		else:
+			print 'ERROR, INVALID ORIENTATION'
 ########################
 #A class to store an instance of a Conveyor Belt, and the location properties of said piece
 ########################
 
+
 class Conveyor_Belt():
-	def __init__(self,tile_type,tile_orientation)
+	#the default direction for each piece will be (0,1) -> pointing 'up' towards the positive y axis, in the down direction
+	def __init__(self,features):
+		self.orientation=features['orientation']
+		self.conveyor_type=features['conveyor_type']
+		self.conveyor_out=self.orientation
+		self.conveyor_in=self.initialize_conveyor_properties(features['conveyo
+		
+	def initialize_conveyor_properties(self):
+		#first, identify the type of piece 
