@@ -927,7 +927,6 @@ class Boardspace():
 		elif self.boardtile=='blank':
 			self.boardtile_image=pygame.transform.scale(pygame.image.load('Images/Board_Elements/blank.jpg'),(100,100))
 
-
 		elif self.boardtile=='pit':
 			self.boardtile_image=pygame.transform.scale(pygame.image.load('Images/Board_Elements/pit.jpg'),(100,100))
 			self.pit=True
@@ -951,9 +950,9 @@ class Boardspace():
 
 
 	def rotate_image(self,orientation):
-		if orientation==(0,1):
+		if orientation==(0,-1):
 			pass
-		elif orientation==(0,-1):
+		elif orientation==(0,1):
 			self.boardtile_image= pygame.transform.rotate(self.boardtile_image,180)
 		elif orientation==(1,0):
 			self.boardtile_image= pygame.transform.rotate(self.boardtile_image,90)
@@ -967,7 +966,7 @@ class Boardspace():
 
 
 class Conveyor_Belt():
-	#the default direction for each piece will be (0,-1) -> pointing 'up' towards the positive y axis, in the down direction
+	#the default orientation for each piece will be (0,-1) -> pointing 'down' towards the negative y axis, in the natural up direction
 	def __init__(self,conveyor_dict):
 		self.orientation=conveyor_dict['orientation']
 		self.conveyor_type=conveyor_dict['conveyor_type']
@@ -977,5 +976,48 @@ class Conveyor_Belt():
 	def initialize_conveyor_properties(self):
 		#first, identify the type of piece
 		if self.conveyor_type=='straight':
-			return {(0,1):'stright'}
-		elif self.conveyor_type=='rotate_left':	
+			cb_dict={(0,1):'straight'}
+		elif self.conveyor_type=='rotate_left':
+			cb_dict={(-1,0):'rotate_left'}
+		elif self.conveyor_type=='rotate_right':
+			cb_dict={(1,0):'rotate_right'}
+		elif self.conveyor_type=='merge_straight_left':
+			cb_dict={(-1,0):'rotate_left',(0,1):'straight'}
+		elif self.conveyor_type=='merge_straight_right':
+			cb_dict={(1,0):'rotate_right',(0,1):'straight'}
+		elif self.conveyor_type=='merge_left_right':
+			cb_dict={(-1,0):'rotate_left',(1,0):'rotate_right'}
+		elif self.conveyor_type=='merge_straight_left_right':
+			cb_dict={(-1,0):'rotate_left',(0,1):'straight',(1,0):'rotate_right'}
+		else:
+			print 'ERROR LOADING CONVEYOR BELT TILE!'
+
+		#now rotate these properties based on the orientation
+		if orientation==(0,-1):
+			#natural orientation, return dict
+			return cb_dict
+		elif orientation==(0,1):
+			#flip 180 degrees
+			rotated_cb_dict={}
+			for key,value in cb_dict.iteritems():
+				new_key=tuple(self.rotate_vector(np.array(key),180))
+				rotated_cb_dict[new_key]=value
+		elif orientation==(1,0):
+			#flip rotate so direction is to the right
+			rotated_cb_dict={}
+			for key,value in cb_dict.iteritems():
+				new_key=tuple(self.rotate_vector(np.array(key),-90))
+				rotated_cb_dict[new_key]=value
+		elif orientation==(-1,0):
+			#rotate so directino is to the left
+			rotated_cb_dict={}
+			for key,value in cb_dict.iteritems():
+				new_key=tuple(self.rotate_vector(np.array(key),90))
+				rotated_cb_dict[new_key]=value
+
+	def rotate_vector(self, dir_array,theta_deg):
+		theta_rad=math.radians(theta_deg)
+		rotation_vector=np.array([[math.cos(theta_rad),-math.sin(theta_rad)],[math.sin(theta_rad),math.cos(theta_rad)]])
+		final_vector=rotation_vector.dot(dir_array)
+
+		return np.around(final_vector,0)
