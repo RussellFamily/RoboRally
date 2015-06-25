@@ -667,9 +667,84 @@ class Game():
 	#QUESTION: will the conveyor belt be its own object to check against?
 	#i believe it should be, and the boardspace links to this object which it can check against
 	#it will mostly be a storage of values relative to the space
+	def advance_conveyor_space(self,robot):
+
+	def conveyor_collision_detection(self, queue):
+		#locked_list stores the names of robots who have the locked condition for a conveyor belt
+		#the locked condition occurs when a robot is unable to progress on the conveyor belt
+		locked_list_robots=[]
+		locked_list_locations=[]
+		#firstly, we need to check to see if any robots are being pushed into the same square by conveyor belts
+		#compare each pair of robots only once
+		for i,robot_i in enumerate(queue):
+			robot_i_destination=robot_i.position+np.array(self.board.board_dict[tuple(robot_i.position)].cb[1].conveyor_out)
+			for j,robot_j in enumerate(queue[i:]):
+				robot_j_destination=robot_j.position+np.array(self.board.board_dict[tuple(robot_j.position)].cb[1].conveyor_out)
+
+				if robot_i_destination==robot_j_destination:
+					locked_list_locations.append(robot_j.position)
+
+					if robot_i.robot_name not in locked_list:
+						locked_list.append(robot_i.robot_name)
+						locked_list_locations.append(tuple(robot_i.position))
+					if robot_j.robot_name not in locked_list:
+						locked_list.append(robot_j.robot_name)
+						locked_list_locations.append(tuple(robot_j.position))
+		#now that we've checked that, lets check for any robots moving off of a conveyor belt into an occupied spot
+		#only look at unlocked robots, since locked robots can't move
+
+		for robot in [robot for robot in queue if robot.robot_name not in locked_list_robots]:
+			robot_destination=tuple(robot.position+np.array(self.board.board_dict[tuple(robot.position)].cb[1].conveyor_out))
+			if self.board.board_dict[robot_destination].cb[0]==False:
+				for other_player in self.playerlist:
+					if tuple(other_player.robot.position)==robot_destination:
+						#after all these loops and conditions, we found the one that locks the robot
+						if robot.robot_name not in locked_list_robots:
+							locked_list_robots.append(robot.robot_name)
+							locked_list_locations.append(tuple(robot.position))
+
+		#whew, alright, now to check to see if other robots that have not been marked as locked are impacted by the locking mechanism
+		#needs to be a while loop that checks to see if there is no new locks before breaking
+		while True:
+			new_lock=False
+			for robot in [robot for robot in queue if robot.robot_name not in locked_list_robots]:
+				robot_destination=tuple(robot.position+np.array(self.board.board_dict[tuple(robot.position)].cb[1].conveyor_out))
+				if robot_destination in locked_list_locations:
+					locked_list_robots.append(robot.robot_name)
+					locked_list_locations.append(tuple(robot.position))
+					new_lock=True
+
+			#see if the new lock flag has been triggered, and if not, break
+			if new_lock==False:
+				break
+
+		#double whew. alright, we dealt with all the BS leading up to moving conveyor belts, now we can move all robots not locked!
+		for robot in [robot for robot in queue if robot.robot_name not in locked_list_robots]:
+			#lets have a helper function handle this last portion
+			self.advance_conveyor_space(robot)
+
+
 	def execute_conveyor_belts(self):
+		#iterate over each robot, and see if they are on a fast conveyor belt, if they are, add to queue
+		fast_queue=[]
+		for player in self.playerlist:
+			robot_pos=tuple(player.robot.position)
+			if self.board.board_dict[robot_pos].cb[0]==True:
+				if self.board.board_dict[robo_pos][1].speed=='fast':
+					fast_queue.append(player.robot)
+					#self.advance_conveyor_space(player.robot)
+		#collision detection for conveyor belts, only call if there are robots on conveyor belts
+		if len(fast_queue)>0:
+			self.conveyor_collision_detection(fast_queue)
+		#advance all conveyor belts
+		slow_queue=[]
+		for player in self.playerlist:
+			robot_pos=tuple(player.robot.position)
+			if self.board.board_dict[robot_pos].cb[0]==True:
+				slow_queue.append(player.robot)
 
-
+		if len(slow_queue) > 0:
+			self.conveyor_collision_detection(slow_queue)
 ###########################
 #Card object is used by robots to move or rotate, can either be in a deck, discard, hand, or register (locked or unlocked)
 ###########################
@@ -972,6 +1047,7 @@ class Conveyor_Belt():
 		self.conveyor_type=conveyor_dict['conveyor_type']
 		self.conveyor_out=self.orientation
 		self.conveyor_in=self.initialize_conveyor_properties()
+		self.conveyor_speed=conveyor_dict['speed']
 
 	def initialize_conveyor_properties(self):
 		#first, identify the type of piece
@@ -998,18 +1074,21 @@ class Conveyor_Belt():
 			return cb_dict
 		elif orientation==(0,1):
 			#flip 180 degrees
+			self.conveyor_out=tuple(self.rotate_vector(np.array(self.conveyor_out),180))
 			rotated_cb_dict={}
 			for key,value in cb_dict.iteritems():
 				new_key=tuple(self.rotate_vector(np.array(key),180))
 				rotated_cb_dict[new_key]=value
 		elif orientation==(1,0):
 			#flip rotate so direction is to the right
+			self.conveyor_out=tuple(self.rotate_vector(np.array(self.conveyor_out),-90))
 			rotated_cb_dict={}
 			for key,value in cb_dict.iteritems():
 				new_key=tuple(self.rotate_vector(np.array(key),-90))
 				rotated_cb_dict[new_key]=value
 		elif orientation==(-1,0):
 			#rotate so directino is to the left
+			self.conveyor_out=tuple(self.rotate_vector(np.array(self.conveyor_out),90))
 			rotated_cb_dict={}
 			for key,value in cb_dict.iteritems():
 				new_key=tuple(self.rotate_vector(np.array(key),90))
