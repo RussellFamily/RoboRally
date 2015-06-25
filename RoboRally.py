@@ -23,7 +23,7 @@ class Display():
 		for row in range(12):
 			for col in range(12):
 				#blit the board tile
-				image=self.board..board_dict[(row,col)].boardtile_image
+				image=self.board.board_dict[(row,col)].boardtile_image
 				self.screen.blit(image,(row*100,col*100))
 				#if there are any walls, blit the walls on top of the tile
 				#this overwrites the tile for now, until transparent pngs get used
@@ -605,8 +605,8 @@ class Game():
 		to_fire=[]
 		for player in self.playerlist:
 			if player.robot.dead==False:
-			laser_origin,laser_direction=player.robot.position,player.robot.direction
-			laser_hit=self.fire_laser(laser_origin,laser_direction,'robot')
+				laser_origin,laser_direction=player.robot.position,player.robot.direction
+				laser_hit=self.fire_laser(laser_origin,laser_direction,'robot')
 			if laser_hit is not None:
 				to_fire.append(laser_hit)
 		return to_fire
@@ -648,7 +648,8 @@ class Game():
 	#Board elements! Only working on conveyor belts for this iteration, but it will all be wrapped int the board element function
 
 	def execute_board_elements(self):
-
+		#conveyor belts!
+		self.execute_conveyor_belts()
 	#Conveyor Belts!
 	#only need to execute conveyor belt spaces that robots are on, use their keys to check if conveyor belts exist
 
@@ -1045,7 +1046,7 @@ class Boardspace():
 		if 'walls' in boardtile_dict:
 			self.walls=boardtile_dict['walls']
 
-		if 'lasers' in boardtile_dict
+		if 'lasers' in boardtile_dict:
 			self.lasers=boardtile_dict['lasers']
 
 
