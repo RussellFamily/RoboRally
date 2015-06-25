@@ -668,6 +668,32 @@ class Game():
 	#i believe it should be, and the boardspace links to this object which it can check against
 	#it will mostly be a storage of values relative to the space
 	def advance_conveyor_space(self,robot):
+		#we need to advance the robot one square along the path of the conveyor belt, see if destination is a cb, then check for rotation
+		origin=robot.position
+		outgoing_direction=self.board.board_dict[tuple(robot.position)].cb[1].conveyor_out
+		destination=robot.position+np.array(outgoing_direction)
+		#assign the destination as the robots new position
+		robot.position=destination
+		#check to see if new square is a cb
+		if self.board.board_dict[tuple(destination)].cb[0]==True:
+			#if so, check conveyor in dictionary for appropriate  rotation if any
+			#rotate outgoing vector to be the incoming vector to check against
+			incoming_direction=tuple(self.rotate(np.array(outgoing_direction),180))
+			#just to make sure, we will see if the origin direction is in the dictionary before comparing
+			if incoming_direction in self.board.board_dict[tuple(robot.position)].cb[1].conveyor_in:
+				#now, determine if there is any rotation
+				incoming_value=self.board.board_dict[tuple(robot.position)].cb[1].conveyor_in[incoming_direction]
+				if incoming_value=='straight':
+					pass
+				elif incoming_value=='rotate_left':
+					self.rotate_robot(-90,robot)
+				elif incoming_value=='rotate_right':
+					self.rotate_robot(90,robot)
+				else:
+					print 'ERROR, invalid value for key'
+			else:
+				print 'Key not found in dictionary, recheck board setup'
+
 
 	def conveyor_collision_detection(self, queue):
 		#locked_list stores the names of robots who have the locked condition for a conveyor belt
