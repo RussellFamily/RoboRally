@@ -209,7 +209,7 @@ class Game():
 			for player in self.playerlist:
 				print player.robot.position,player.robot.direction
 			#this is where board elements will go
-
+			self.execute_board_elements()
 			#fire the lasers!
 			self.fire_laser_phase()
 			#this is where checkpoint touches will go
@@ -557,7 +557,7 @@ class Game():
 		fire_list=self.board_laser_fire()+self.robot_laser_fire()
 		for robot in fire_list:
 			robot.assign_damage(1)
-			print robot.robot_name+' just took a point of laser damage! They have now taken ' + robot.robot_name + ' damage!'
+			print robot.robot_name+' just took a point of laser damage! They have now taken ' + str(robot.damage) + ' damage!'
 
 
 	#this function currently only handles single laser board fire, needs to be modified for double lasers
@@ -567,7 +567,7 @@ class Game():
 		laser_target_flag=False
 		target=None
 		close_wall=direction
-
+				
 		far_wall=self.rotate_vector(direction,180)
 		#if the origin is a board laser, check the space immediately in front of it, else, check for the edge of the space to begin wall detection
 		if origin=='board':
@@ -578,23 +578,27 @@ class Game():
 		while not laser_target_flag:
 			#check the far wall on the current space
 			if tuple(far_wall) in self.board.board_dict[tuple(current_space)].walls:
-				#laser has hit a wall, and stops
+				#laser has hit a wall, and stopsce
 				laser_target_flag=True
-				continue
+				
 			#check to see if the laser is off the board
+			print 'before',current_space,direction
 			current_space+=direction
+			print 'after',current_space,direction
+			
 			if current_space[0]>11 or current_space[0]<0 or current_space[1]>11 or current_space[1]<0:
 				#next space is off board, laser not terminated by wall
 				laser_target_flag=True
-				continue
+				
 			#check close wall of next space
-			if tuple(close_wall) in self.board.board_dict[tuple(current_space)].walls:
+			elif tuple(close_wall) in self.board.board_dict[tuple(current_space)].walls:
 				#laser has hit a wall, and stops
 				laser_target_flag=True
-				continue
+				
 			#finally, check again for robots
 			for player in self.playerlist:
 				if tuple(player.robot.position)==tuple(current_space):
+					print 'hit_robot',player.robot.position,current_space
 					return player.robot
 
 
