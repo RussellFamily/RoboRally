@@ -563,11 +563,11 @@ class Game():
 	#this function currently only handles single laser board fire, needs to be modified for double lasers
 	#these could be stored as two instances of the laser in the board space object? then they can be iterated over
 	def fire_laser(self,location,direction,origin):
-		current_space=location
+		current_space=location.copy()
 		laser_target_flag=False
 		target=None
 		close_wall=direction
-				
+
 		far_wall=self.rotate_vector(direction,180)
 		#if the origin is a board laser, check the space immediately in front of it, else, check for the edge of the space to begin wall detection
 		if origin=='board':
@@ -580,21 +580,21 @@ class Game():
 			if tuple(far_wall) in self.board.board_dict[tuple(current_space)].walls:
 				#laser has hit a wall, and stopsce
 				laser_target_flag=True
-				
+
 			#check to see if the laser is off the board
 			print 'before',current_space,direction
 			current_space+=direction
 			print 'after',current_space,direction
-			
+
 			if current_space[0]>11 or current_space[0]<0 or current_space[1]>11 or current_space[1]<0:
 				#next space is off board, laser not terminated by wall
 				laser_target_flag=True
-				
+
 			#check close wall of next space
 			elif tuple(close_wall) in self.board.board_dict[tuple(current_space)].walls:
 				#laser has hit a wall, and stops
 				laser_target_flag=True
-				
+
 			#finally, check again for robots
 			for player in self.playerlist:
 				if tuple(player.robot.position)==tuple(current_space):
