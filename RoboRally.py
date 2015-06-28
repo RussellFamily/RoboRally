@@ -627,7 +627,7 @@ class Game():
 
 	#checkpoint phase of the register, allow for robots who are on a checkpoint to update their archive, and touch flags
 	def checkpoint_phase(self):
-		for player in self.playerlist:
+		for player in [player for player in self.playerlist if player.robot.dead==True]:
 			if self.board.board_dict[tuple(player.robot.position)].flag==True:
 				if player.robot.next_flag==self.board.board_dict[tuple(player.robot.position)].flag_num:
 					print player.robot.robot_name+' has touched Flag ' + player.robot.next_flag+'!'
@@ -755,7 +755,7 @@ class Game():
 	def execute_conveyor_belts(self):
 		#iterate over each robot, and see if they are on a fast conveyor belt, if they are, add to queue
 		fast_queue=[]
-		for player in self.playerlist:
+		for player in [player for player in self.playerlist if player.robot.dead==True]:
 			robot_pos=tuple(player.robot.position)
 			if self.board.board_dict[robot_pos].cb[0]==True:
 				if self.board.board_dict[robo_pos][1].speed=='fast':
@@ -766,7 +766,7 @@ class Game():
 			self.conveyor_collision_detection(fast_queue)
 		#advance all conveyor belts
 		slow_queue=[]
-		for player in self.playerlist:
+		for player in [player for player in self.playerlist if player.robot.dead==True]:
 			robot_pos=tuple(player.robot.position)
 			if self.board.board_dict[robot_pos].cb[0]==True:
 				slow_queue.append(player.robot)
