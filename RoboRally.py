@@ -582,9 +582,7 @@ class Game():
 				laser_target_flag=True
 
 			#check to see if the laser is off the board
-			print 'before',current_space,direction
 			current_space+=direction
-			print 'after',current_space,direction
 
 			if current_space[0]>11 or current_space[0]<0 or current_space[1]>11 or current_space[1]<0:
 				#next space is off board, laser not terminated by wall
@@ -598,7 +596,6 @@ class Game():
 			#finally, check again for robots
 			for player in self.playerlist:
 				if tuple(player.robot.position)==tuple(current_space):
-					print 'hit_robot',player.robot.position,current_space
 					return player.robot
 
 
