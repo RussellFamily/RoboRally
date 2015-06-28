@@ -31,6 +31,12 @@ class Display():
 				for direction in wall_list:
 					blit_image=self.board.determine_wall_orientation(tuple(direction))
 					self.screen.blit(blit_image,(row*100,col*100))
+				#now blit lasers present onto the screen
+				laser_list=self.board.board_dict[(row,col)].lasers
+				for laser_loc in laser_list:
+					blit_image=self.board.determine_laser_orientation(tuple(direction))
+					self.screen.blit(blit_image,(row*100,col*100))
+
 		#finally, blit player robots
 		for player in Game.playerlist:
 			self.screen.blit(player.robot.image_dict[tuple(player.robot.direction)],(player.robot.position[0]*100,player.robot.position[1]*100))
@@ -974,7 +980,22 @@ class Board():
 		else:
 			print 'WALL IMAGE ERROR'
 
-	#a function that locations and assigns all the board space keys for firing lasers
+	#laser location
+	def determine_laser_orientation(self,laser_direction):
+		base_image=self.images_dict['laser']
+		if laser_direction==(0,1):
+			return base_image
+		elif laser_direction==(0,-1):
+			return pygame.transform.rotate(base_image,180)
+		elif laser_direction==(1,0):
+			return pygame.transform.rotate(base_image,90)
+		elif laser_direction==(-1,0):
+
+			return pygame.transform.rotate(base_image,-90)
+		else:
+			print 'LASER IMAGE ERROR'
+
+	#a function that locates and assigns all the board space keys for firing lasers
 	def locate_lasers(self):
 		all_lasers=[]
 		for key, value in self.board_dict.iteritems():
