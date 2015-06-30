@@ -16,7 +16,7 @@ class Display():
 		self.screensize=(1200,1200)
 		self.screen=pygame.display.set_mode(self.screensize)
 		self.board=board
-
+		#testing
 	def blitscreen(self,Game):
 		self.screen.fill((0,0,0))
 		#blit boardtiles
