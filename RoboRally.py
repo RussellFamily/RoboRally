@@ -6,6 +6,7 @@ import pygame
 import numpy as np
 import math
 import weakref as wr
+
 #Classes used in the game
 ###########################
 #Game Object that runs the display, handling updates to the screen
@@ -396,7 +397,7 @@ class Game():
 
 		#Assign robots to players - default arrangement for now
 		#TODO - make dynamic
-		robots=['player-1','player-2','player-3','player-4']
+		robots=['robot1','robot2','robot3','robot4']
 		#list comprehension to create list of players
 		self.playerlist=[Player(player,robots[i]) for i,player in enumerate(playernames)]
 		#The game now has a list of the players, their names, and which robots they are playing!
@@ -887,7 +888,7 @@ class Robot():
 		self.next_flag=1
 
 	def load_image(self):
-		image=pygame.transform.scale(pygame.image.load('Images/Robots/'+self.robot_name+'.jpg'),(100,100))
+		image=pygame.transform.scale(pygame.image.load('Images_v2/Robots/'+self.robot_name+'.jpg'),(100,100))
 		return image
 
 	def initiate_registers(self):
@@ -959,7 +960,7 @@ class Board():
 
 	#currently load all board elements into
 	def load_images(self):
-		board_spaces=['blank','checkpoint-1','checkpoint-2','fast','flag','laser','pit','slow','wall']
+		board_spaces=['blank','checkpoint_1','checkpoint_2','fast','flag','laser_origin','laser','pit','straight','rotate_left','rotate_right','wall']
 		image_dict={}
 		for space in board_spaces:
 			image_dict[space]=pygame.transform.scale(pygame.image.load('Images/Board_Elements/'+space+'.jpg'),(100,100))
@@ -1026,7 +1027,7 @@ class Boardspace():
 
 	def load_board_tile(self):
 		if self.boardtile=='cb':
-			pygame.transform.scale(pygame.image.load('Images/Board_Elements/'++'.jpg'),(100,100))
+			pygame.transform.scale(pygame.image.load('Images_v2/Board_Elements/'++'.jpg'),(100,100))
 
 	#notes for feature coding
 	#all features will be coded into the features function as a dictionary
@@ -1045,22 +1046,22 @@ class Boardspace():
 
 		if self.boardtile=='cb':
 			self.cb=[True,Conveyor_Belt(boardtile_dict['cb'])]
-			self.boardtile_image=pygame.transform.scale(pygame.image.load('Images/Board_Elements/'+boardtile_dict['cb']['conveyor_type']+'.jpg'),(100,100))
+			self.boardtile_image=pygame.transform.scale(pygame.image.load('Images_v2/Board_Elements/'+boardtile_dict['cb']['conveyor_type']+'.jpg'),(100,100))
 			self.rotate_image(boardtile_dict['cb']['orientation'])
 
 		elif self.boardtile=='blank':
-			self.boardtile_image=pygame.transform.scale(pygame.image.load('Images/Board_Elements/blank.jpg'),(100,100))
+			self.boardtile_image=pygame.transform.scale(pygame.image.load('Images_v2/Board_Elements/blank.jpg'),(100,100))
 
 		elif self.boardtile=='pit':
-			self.boardtile_image=pygame.transform.scale(pygame.image.load('Images/Board_Elements/pit.jpg'),(100,100))
+			self.boardtile_image=pygame.transform.scale(pygame.image.load('Images_v2/Board_Elements/pit.jpg'),(100,100))
 			self.pit=True
 
-		elif self.boardtile=='checkpoint-1':
-			self.boardtile_image=pygame.transform.scale(pygame.image.load('Images/Board_Elements/checkpoint-1.jpg'),(100,100))
+		elif self.boardtile=='checkpoint_1':
+			self.boardtile_image=pygame.transform.scale(pygame.image.load('Images_v2/Board_Elements/checkpoint_1.jpg'),(100,100))
 			self.checkpoint=True
 
-		elif self.boardtile=='checkpoint=2':
-			self.boardtile_image=pygame.transform.scale(pygame.image.load('Images/Board_Elements/checkpoint-2.jpg'),(100,100))
+		elif self.boardtile=='checkpoint_2':
+			self.boardtile_image=pygame.transform.scale(pygame.image.load('Images_v2/Board_Elements/checkpoint_2.jpg'),(100,100))
 			self.checkpoint=True
 
 		#NEXT, we will see if there are any walls or lasers
