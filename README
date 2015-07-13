@@ -8,35 +8,53 @@ Version 1.0 - This will mostly consist of implementation of the base game, witho
 
 #####################################################################
 
+REQUIREMENTS:
+The current version of RoboRally requires the following libraries:
+sys
+random
+yaml
+pygame
+numpy
+math
 
-The first step is to identify classes and functions that are needed to play the mechanics of the game
+Additional Libraries may be added depending on future functionality
+
+###################################################################
+
+Playing a game:
+The current method to start a game is:
+1. import RoboRally into python
+2. create an instance of the game object (i.e. game=RoboRally.Game()
+3. have the game object execute the run_game function (i.e. game.run_game() )
+4. ????????
+5. Profit!
 
 
-Classes:
+###################################################################
+
+Overview of Classes:
+
 
 Game: An object that represents the instance of playing the game: controls rounds, executes moves, executes board elements, and checks for endgame conditions, and owns the board, card deck, and player objects.
 
-Player - A representation of a player in the game.  Will contain objects related to the players robot, hand, damage, touched flags, and last checkpoint
+Player - A representation of a player in the game.  Will contain objects related to the players robot, hand, and whether the player is declaring a shutdown
 
-Robot - Represents the robot being controlled by a player.  May be manipulated by cards by the player, board elements, and can interact with other robot objects.
+Robot - Represents the robot being controlled by a player. Stores information about the robots, including damage, death, shutdown, registers, position, orientation, checkpoints, and image
 
 Deck - An object representing the deck of movement cards dealt out to players, contains cards in a draw and discard pile, and can be shuffled.
 
-Card - An object that details out a move or rotate action a robot takes during a round by putting it into a register
+Card - An object that details out a move or rotate action a robot takes during a round by putting it into a register, and priority of the move
 
-Register - An object that contains a move action.  Also contains a boolean flag for register lock.
+Register - An object that contains a card object.  Also contains a boolean flag for register lock.
 
-Board - Represents an array of board spaces.  These contain board elements, flags, and robots.
+Board - Represents an array of board spaces.  Stores a dictionary of board spaces keyed by a 2-dimensional array tuple, which contains a boardspace object
 
-Board Space - a single square of board that may contain board elements, including the flag and checkpoint
-
-Flag - An object a robot needs to touch in order to win the game.  Exists on the board, and acts as a checkpoint
-
-Checkpoint - A space on the board that allows archives to be backed (any phase) and heal damage (round end)
+Board Space - Contains information about the boardspace, including what type of tile it is, as well as presence of walls, lasers, flags and checkpoints
 
 
+##################################################################
 
-
+Individual Classes: The following is a breakdown of each class, followed by the definitions of its attributes and functions.
 Functions:
 
 Laserfire -(Robot/Board Space) A function that a robot or board element has that fires a laser at all in line of sight

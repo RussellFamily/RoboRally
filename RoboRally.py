@@ -5,7 +5,6 @@ import yaml
 import pygame
 import numpy as np
 import math
-import weakref as wr
 
 #Classes used in the game
 ###########################
@@ -27,12 +26,13 @@ class Display():
 				image=self.board.board_dict[(row,col)].boardtile_image
 				self.screen.blit(image,(row*100,col*100))
 				#if there are any walls, blit the walls on top of the tile
-				#this overwrites the tile for now, until transparent pngs get used
 				wall_list=self.board.board_dict[(row,col)].walls
 				for direction in wall_list:
 					blit_image=self.board.determine_wall_orientation(tuple(direction))
 					self.screen.blit(blit_image,(row*100,col*100))
 				#now blit lasers present onto the screen
+				#this consists of blitting the original laser, and blitting every space the laser can reach until it reaches a wall or the edge of the board
+				#TODO: Need a way to incorporate additional laser images onto the board
 				laser_list=self.board.board_dict[(row,col)].lasers
 				for laser_loc in laser_list:
 					blit_image=self.board.determine_laser_orientation(tuple(direction))
@@ -377,19 +377,9 @@ class Game():
 					break
 			playernames.append(playername)
 		#Determine board to be used - for now will be a test board - and load the dictionary of the board
-		#self.board='test'
-		#board_file=open(self.board+'/'+self.board+'_config.txt','r')
-		#board_dict=yaml.load(board_file)
-		#instead, make a board whose only tiles are blank
-		#ignore board object for now
 
-		#CODE FOR BASIC BOARD
-		#board=[['blank']*12]*12
-		#self.display=Display(board)
-
-
-		#implement blank board, needs to be changed to alternating boards later
-		self.board=Board('test_walls')
+		#implement named test board, needs to be changed to alternating boards later
+		self.board=Board('test_lasers')
 		self.display=Display(self.board)
 		#Convert board dict to usable input
 		#TODO
@@ -574,7 +564,7 @@ class Game():
 		laser_target_flag=False
 		target=None
 		close_wall=direction
-
+		#TODO -> Add print statements to debug board laser fire
 		far_wall=self.rotate_vector(direction,180)
 		#if the origin is a board laser, check the space immediately in front of it, else, check for the edge of the space to begin wall detection
 		if origin=='board':
@@ -611,10 +601,9 @@ class Game():
 
 	def robot_laser_fire(self):
 		to_fire=[]
-		for player in self.playerlist:
-			if player.robot.dead==False:
-				laser_origin,laser_direction=player.robot.position,player.robot.direction
-				laser_hit=self.fire_laser(laser_origin,laser_direction,'robot')
+		for player in [player for player in self.playerlist if player.robot.dead==False]:
+			laser_origin,laser_direction=player.robot.position,player.robot.direction
+			laser_hit=self.fire_laser(laser_origin,laser_direction,'robot')
 			if laser_hit is not None:
 				to_fire.append(laser_hit)
 		return to_fire
@@ -625,7 +614,10 @@ class Game():
 		for laser_loc in self.board.lasers:
 			lasers=self.board.board_dict(tuple(laser_loc))
 			for laser in lasers:
-				laser_origin,laser_direction=laser_loc,laser
+				#note: the lasers stored in the dictionary are the location with respect to the board square on where to position the laser
+				#because of this, we need to rotate the direction of the laser 180 degrees
+				laser_origin,laser_direction=laser_loc,self.rotate_vector(np.array(laser),180)
+				
 				#board laser vals need to be converted to numpy arrays
 				laser_hit=self.fire_laser(np.array(laser_origin),np.array(laser_direction),'board')
 				if laser_hit is not None:
@@ -634,7 +626,7 @@ class Game():
 
 	#checkpoint phase of the register, allow for robots who are on a checkpoint to update their archive, and touch flags
 	def checkpoint_phase(self):
-		for player in [player for player in self.playerlist if player.robot.dead==True]:
+		for player in [player for player in self.playerlist if player.robot.dead==False]:
 			if self.board.board_dict[tuple(player.robot.position)].flag==True:
 				if player.robot.next_flag==self.board.board_dict[tuple(player.robot.position)].flag_num:
 					print player.robot.robot_name+' has touched Flag ' + player.robot.next_flag+'!'
@@ -762,7 +754,7 @@ class Game():
 	def execute_conveyor_belts(self):
 		#iterate over each robot, and see if they are on a fast conveyor belt, if they are, add to queue
 		fast_queue=[]
-		for player in [player for player in self.playerlist if player.robot.dead==True]:
+		for player in [player for player in self.playerlist if player.robot.dead==False]:
 			robot_pos=tuple(player.robot.position)
 			if self.board.board_dict[robot_pos].cb[0]==True:
 				if self.board.board_dict[robo_pos][1].speed=='fast':
@@ -773,7 +765,7 @@ class Game():
 			self.conveyor_collision_detection(fast_queue)
 		#advance all conveyor belts
 		slow_queue=[]
-		for player in [player for player in self.playerlist if player.robot.dead==True]:
+		for player in [player for player in self.playerlist if player.robot.dead==False]:
 			robot_pos=tuple(player.robot.position)
 			if self.board.board_dict[robot_pos].cb[0]==True:
 				slow_queue.append(player.robot)
@@ -1000,7 +992,7 @@ class Board():
 	def locate_lasers(self):
 		all_lasers=[]
 		for key, value in self.board_dict.iteritems():
-			if len(value.walls)>0:
+			if len(value.lasers)>0:
 				all_lasers.append(key)
 		return all_lasers
 
