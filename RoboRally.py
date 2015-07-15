@@ -560,6 +560,7 @@ class Game():
 	#this function currently only handles single laser board fire, needs to be modified for double lasers
 	#these could be stored as two instances of the laser in the board space object? then they can be iterated over
 	def fire_laser(self,location,direction,origin):
+		print 'firing laser!',location,direction,origin
 		current_space=location.copy()
 		laser_target_flag=False
 		target=None
@@ -573,6 +574,7 @@ class Game():
 					return player.robot
 		#check for current wall space, check if next space is off board, then advance to next space if not, check closest wall, then check for robot in the square
 		while not laser_target_flag:
+			print 'still firing',current_space
 			#check the far wall on the current space
 			if tuple(far_wall) in self.board.board_dict[tuple(current_space)].walls:
 				#laser has hit a wall, and stopsce
@@ -608,16 +610,18 @@ class Game():
 				to_fire.append(laser_hit)
 		return to_fire
 	def board_laser_fire(self):
+		print 'boardlasertime'
 		#fire board lasers
 		#array of lasers to be stored on a stack
 		to_fire=[]
 		for laser_loc in self.board.lasers:
 			lasers=self.board.board_dict(tuple(laser_loc))
 			for laser in lasers:
+				print 'firing lazer'
 				#note: the lasers stored in the dictionary are the location with respect to the board square on where to position the laser
 				#because of this, we need to rotate the direction of the laser 180 degrees
 				laser_origin,laser_direction=laser_loc,self.rotate_vector(np.array(laser),180)
-				
+
 				#board laser vals need to be converted to numpy arrays
 				laser_hit=self.fire_laser(np.array(laser_origin),np.array(laser_direction),'board')
 				if laser_hit is not None:
