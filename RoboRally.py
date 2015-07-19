@@ -5,6 +5,7 @@ import yaml
 import pygame
 import numpy as np
 import math
+import ConfigParser
 
 #Classes used in the game
 ###########################
@@ -68,12 +69,42 @@ class Display():
 
 class Game():
 
+	
 	def __init__(self):
 		self.playerlist=[]
 		self.deck=Deck()
 		self.end=False
 		#default setting for now, need to implement selection of flags to place on board, or build it into the board property
 		self.num_flags=5
+
+	def run_test_suite(self):
+		configParser = ConfigParser.RawConfigParser()   
+		configFilePath = r'test_config.cfg'
+		configParser.read(configFilePath)
+	
+		#setup board to be used for testing
+		testboard=configParser.get('board', 'board_name')
+		self.board=Board(testboard)
+		self.display=Display(self.board)
+		
+		#setup players to be used instead of using game setup function and assign robot starts positions
+		self.playerlist=[Player('player1','robot1'),Player('player2','robot2')]
+		for i,player in enumerate(self.playerlist):
+			player.robot.position=np.array([i,0])
+			player.robot.direction=np.array([0,1])
+			player.robot.archive=player.robot.position
+		
+		
+		#create card objects and assign them to the appropriate registers
+		for player in self.playerlist:
+			for i in range(1,6):
+				priority,move='priority'+str(i),'move'+str(i)
+				card=Card(configParser.get(player.name, priority),configParser.get(player.name, move))
+				player.robot.registers[i].card=card
+		
+		
+		#run the preassigned registers
+		self.complete_registers()
 
 	def run_game(self):
 		#get the board and players setup to play
@@ -310,19 +341,7 @@ class Game():
 							print 'ERROR IN ASSIGNING DIRECTION'
 							player.robot.direction=np.array([-1,-1])
 						break
-	#old function, use newer function that does it by robot
-	#check if players' robots ended up offboard
-	"""def check_offboard(self):
-		for player in self.playerlist:
-			if player.robot.position[0]>=0 and player.robot.position[0]<12 and player.robot.position[1]>=0 and player.robot.position[1]<12 and player.robot.dead==False:
-				#robot is fine or already dead
-				pass
-			else:
-				player.robot.dead=True
-				print player.name+ "'s robot is off the board!\n"
-				player.robot.position=(-1,-1)
-				player.robot.num_death+=1"""
-
+	
 	def check_offboard(self,robot):
 		if robot.dead==True:
 			#robot is already dead, so do nothing
@@ -564,9 +583,9 @@ class Game():
 		current_space=location.copy()
 		laser_target_flag=False
 		target=None
-		close_wall=direction
+		far_wall=direction
 		#TODO -> Add print statements to debug board laser fire
-		far_wall=self.rotate_vector(direction,180)
+		close_wall=self.rotate_vector(direction,180)
 		#if the origin is a board laser, check the space immediately in front of it, else, check for the edge of the space to begin wall detection
 		if origin=='board':
 			for player in self.playerlist:
@@ -574,7 +593,7 @@ class Game():
 					return player.robot
 		#check for current wall space, check if next space is off board, then advance to next space if not, check closest wall, then check for robot in the square
 		while not laser_target_flag:
-			print 'still firing',current_space
+			print 'still firing',current_space,far_wall,direction
 			#check the far wall on the current space
 			if tuple(far_wall) in self.board.board_dict[tuple(current_space)].walls:
 				#laser has hit a wall, and stopsce
@@ -615,7 +634,7 @@ class Game():
 		#array of lasers to be stored on a stack
 		to_fire=[]
 		for laser_loc in self.board.lasers:
-			lasers=self.board.board_dict(tuple(laser_loc))
+			lasers=self.board.board_dict[tuple(laser_loc)].lasers
 			for laser in lasers:
 				print 'firing lazer'
 				#note: the lasers stored in the dictionary are the location with respect to the board square on where to position the laser
@@ -761,7 +780,7 @@ class Game():
 		for player in [player for player in self.playerlist if player.robot.dead==False]:
 			robot_pos=tuple(player.robot.position)
 			if self.board.board_dict[robot_pos].cb[0]==True:
-				if self.board.board_dict[robo_pos][1].speed=='fast':
+				if self.board.board_dict[robot_pos].cb[1].speed=='fast':
 					fast_queue.append(player.robot)
 					#self.advance_conveyor_space(player.robot)
 		#collision detection for conveyor belts, only call if there are robots on conveyor belts
@@ -944,7 +963,7 @@ class Board():
 		self.boardname=boardname
 		self.board_dict=self.load_board(boardname)
 		self.images_dict=self.load_images()
-		self.lasers=[]
+		self.lasers=self.locate_lasers()
 
 	#load yaml'd dictionary of board elements into an array
 	def load_board(self,boardname):
@@ -1020,10 +1039,10 @@ class Boardspace():
 		self.setup_boardspace(boardtile_dict)
 		self.pit=False
 
-
-	def load_board_tile(self):
-		if self.boardtile=='cb':
-			pygame.transform.scale(pygame.image.load('Images_v2/Board_Elements/'++'.png'),(100,100))
+	#old function?
+	#def load_board_tile(self):
+	#	if self.boardtile=='cb':
+	#		pygame.transform.scale(pygame.image.load('Images_v2/Board_Elements/'++'.png'),(100,100))
 
 	#notes for feature coding
 	#all features will be coded into the features function as a dictionary
@@ -1093,7 +1112,7 @@ class Conveyor_Belt():
 		self.conveyor_type=conveyor_dict['conveyor_type']
 		self.conveyor_out=self.orientation
 		self.conveyor_in=self.initialize_conveyor_properties()
-		self.conveyor_speed=conveyor_dict['speed']
+		self.speed=conveyor_dict['speed']
 
 	def initialize_conveyor_properties(self):
 		#first, identify the type of piece
@@ -1115,24 +1134,24 @@ class Conveyor_Belt():
 			print 'ERROR LOADING CONVEYOR BELT TILE!'
 
 		#now rotate these properties based on the orientation
-		if orientation==(0,-1):
+		if self.orientation==(0,-1):
 			#natural orientation, return dict
 			return cb_dict
-		elif orientation==(0,1):
+		elif self.orientation==(0,1):
 			#flip 180 degrees
 			self.conveyor_out=tuple(self.rotate_vector(np.array(self.conveyor_out),180))
 			rotated_cb_dict={}
 			for key,value in cb_dict.iteritems():
 				new_key=tuple(self.rotate_vector(np.array(key),180))
 				rotated_cb_dict[new_key]=value
-		elif orientation==(1,0):
+		elif self.orientation==(1,0):
 			#flip rotate so direction is to the right
 			self.conveyor_out=tuple(self.rotate_vector(np.array(self.conveyor_out),-90))
 			rotated_cb_dict={}
 			for key,value in cb_dict.iteritems():
 				new_key=tuple(self.rotate_vector(np.array(key),-90))
 				rotated_cb_dict[new_key]=value
-		elif orientation==(-1,0):
+		elif self.orientation==(-1,0):
 			#rotate so directino is to the left
 			self.conveyor_out=tuple(self.rotate_vector(np.array(self.conveyor_out),90))
 			rotated_cb_dict={}
