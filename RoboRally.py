@@ -691,10 +691,14 @@ class Game():
 	#QUESTION: will the conveyor belt be its own object to check against?
 	#i believe it should be, and the boardspace links to this object which it can check against
 	#it will mostly be a storage of values relative to the space
+	
+	#TODO FIX DIRECTION
+	
 	def advance_conveyor_space(self,robot):
 		#we need to advance the robot one square along the path of the conveyor belt, see if destination is a cb, then check for rotation
 		origin=robot.position
 		outgoing_direction=self.board.board_dict[tuple(robot.position)].cb[1].conveyor_out
+		print outgoing_direction
 		destination=robot.position+np.array(outgoing_direction)
 		#assign the destination as the robots new position
 		robot.position=destination
@@ -702,8 +706,9 @@ class Game():
 		if self.board.board_dict[tuple(destination)].cb[0]==True:
 			#if so, check conveyor in dictionary for appropriate  rotation if any
 			#rotate outgoing vector to be the incoming vector to check against
-			incoming_direction=tuple(self.rotate(np.array(outgoing_direction),180))
+			incoming_direction=tuple(self.rotate_vector(np.array(outgoing_direction),180))
 			#just to make sure, we will see if the origin direction is in the dictionary before comparing
+			print self.board.board_dict[tuple(robot.position)].cb[1].conveyor_in
 			if incoming_direction in self.board.board_dict[tuple(robot.position)].cb[1].conveyor_in:
 				#now, determine if there is any rotation
 				incoming_value=self.board.board_dict[tuple(robot.position)].cb[1].conveyor_in[incoming_direction]
@@ -718,7 +723,6 @@ class Game():
 			else:
 				print 'Key not found in dictionary, recheck board setup'
 
-
 	def conveyor_collision_detection(self, queue):
 		#locked_list stores the names of robots who have the locked condition for a conveyor belt
 		#the locked condition occurs when a robot is unable to progress on the conveyor belt
@@ -728,21 +732,21 @@ class Game():
 		#compare each pair of robots only once
 		for i,robot_i in enumerate(queue):
 			robot_i_destination=robot_i.position+np.array(self.board.board_dict[tuple(robot_i.position)].cb[1].conveyor_out)
-			for j,robot_j in enumerate(queue[i:]):
+			for j,robot_j in enumerate(queue[i+1:]):
 				robot_j_destination=robot_j.position+np.array(self.board.board_dict[tuple(robot_j.position)].cb[1].conveyor_out)
 
-				if robot_i_destination==robot_j_destination:
+				if (robot_i_destination==robot_j_destination).all():
 					locked_list_locations.append(robot_j.position)
 
-					if robot_i.robot_name not in locked_list:
-						locked_list.append(robot_i.robot_name)
+					if robot_i.robot_name not in locked_list_robots:
+						locked_list_robots.append(robot_i.robot_name)
 						locked_list_locations.append(tuple(robot_i.position))
-					if robot_j.robot_name not in locked_list:
-						locked_list.append(robot_j.robot_name)
+					if robot_j.robot_name not in locked_list_robots:
+						locked_list_robots.append(robot_j.robot_name)
 						locked_list_locations.append(tuple(robot_j.position))
 		#now that we've checked that, lets check for any robots moving off of a conveyor belt into an occupied spot
 		#only look at unlocked robots, since locked robots can't move
-
+		print locked_list_robots
 		for robot in [robot for robot in queue if robot.robot_name not in locked_list_robots]:
 			robot_destination=tuple(robot.position+np.array(self.board.board_dict[tuple(robot.position)].cb[1].conveyor_out))
 			if self.board.board_dict[robot_destination].cb[0]==False:
@@ -767,9 +771,9 @@ class Game():
 			#see if the new lock flag has been triggered, and if not, break
 			if new_lock==False:
 				break
-
 		#double whew. alright, we dealt with all the BS leading up to moving conveyor belts, now we can move all robots not locked!
 		for robot in [robot for robot in queue if robot.robot_name not in locked_list_robots]:
+			print 'got here!'
 			#lets have a helper function handle this last portion
 			self.advance_conveyor_space(robot)
 
@@ -1111,9 +1115,11 @@ class Conveyor_Belt():
 		self.orientation=conveyor_dict['orientation']
 		self.conveyor_type=conveyor_dict['conveyor_type']
 		self.conveyor_out=self.orientation
+		print self.conveyor_out
 		self.conveyor_in=self.initialize_conveyor_properties()
 		self.speed=conveyor_dict['speed']
 
+	#TODO CHECK ORIENTATION OF CB SPACES
 	def initialize_conveyor_properties(self):
 		#first, identify the type of piece
 		if self.conveyor_type=='straight':
@@ -1132,33 +1138,35 @@ class Conveyor_Belt():
 			cb_dict={(-1,0):'rotate_left',(0,1):'straight',(1,0):'rotate_right'}
 		else:
 			print 'ERROR LOADING CONVEYOR BELT TILE!'
-
+			
+		print cb_dict
+			
 		#now rotate these properties based on the orientation
 		if self.orientation==(0,-1):
 			#natural orientation, return dict
 			return cb_dict
 		elif self.orientation==(0,1):
 			#flip 180 degrees
-			self.conveyor_out=tuple(self.rotate_vector(np.array(self.conveyor_out),180))
+			#self.conveyor_out=tuple(self.rotate_vector(np.array(self.conveyor_out),180))
 			rotated_cb_dict={}
 			for key,value in cb_dict.iteritems():
 				new_key=tuple(self.rotate_vector(np.array(key),180))
 				rotated_cb_dict[new_key]=value
 		elif self.orientation==(1,0):
 			#flip rotate so direction is to the right
-			self.conveyor_out=tuple(self.rotate_vector(np.array(self.conveyor_out),-90))
+			#self.conveyor_out=tuple(self.rotate_vector(np.array(self.conveyor_out),-90))
 			rotated_cb_dict={}
 			for key,value in cb_dict.iteritems():
 				new_key=tuple(self.rotate_vector(np.array(key),-90))
 				rotated_cb_dict[new_key]=value
 		elif self.orientation==(-1,0):
 			#rotate so directino is to the left
-			self.conveyor_out=tuple(self.rotate_vector(np.array(self.conveyor_out),90))
+			#self.conveyor_out=tuple(self.rotate_vector(np.array(self.conveyor_out),90))
 			rotated_cb_dict={}
 			for key,value in cb_dict.iteritems():
 				new_key=tuple(self.rotate_vector(np.array(key),90))
 				rotated_cb_dict[new_key]=value
-
+		return rotated_cb_dict
 	def rotate_vector(self, dir_array,theta_deg):
 		theta_rad=math.radians(theta_deg)
 		rotation_vector=np.array([[math.cos(theta_rad),-math.sin(theta_rad)],[math.sin(theta_rad),math.cos(theta_rad)]])

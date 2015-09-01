@@ -31,9 +31,17 @@
     orientation: !!python/tuple [0, 1]
     speed: slow
 ? !!python/tuple [1, 2]
-: {boardtile: blank}
+: boardtile: cb
+  cb:
+    conveyor_type: straight
+    orientation: !!python/tuple [0, 1]
+    speed: slow
 ? !!python/tuple [1, 3]
-: {boardtile: blank}
+: boardtile: cb
+  cb:
+    conveyor_type: straight
+    orientation: !!python/tuple [0, 1]
+    speed: slow
 ? !!python/tuple [1, 4]
 : {boardtile: blank}
 ? !!python/tuple [1, 5]
