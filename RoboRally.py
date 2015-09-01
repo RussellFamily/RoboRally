@@ -1114,8 +1114,7 @@ class Conveyor_Belt():
 	def __init__(self,conveyor_dict):
 		self.orientation=conveyor_dict['orientation']
 		self.conveyor_type=conveyor_dict['conveyor_type']
-		self.conveyor_out
-		=self.orientation
+		self.conveyor_out=self.orientation
 		print self.conveyor_out
 		self.conveyor_in=self.initialize_conveyor_properties()
 		self.speed=conveyor_dict['speed']

@@ -16,9 +16,9 @@ import yaml
 #Reminder, (x,y) refers to x as the column, y as the row -> (column, row)
 board={(0,0):{'boardtile':'blank'},
 (0,1):{'boardtile':'cb','cb':{'conveyor_type':'straight','speed':'slow','orientation':(1,0)}},
-(0,2):{'boardtile':'blank'},
+(0,2):{'boardtile':'blank','walls':[(0,-1)]},
 (0,3):{'boardtile':'blank'},
-(0,4):{'boardtile':'blank'},
+(0,4):{'boardtile':'blank','walls':[(0,-1)]},
 (0,5):{'boardtile':'blank'},
 (0,6):{'boardtile':'blank'},
 (0,7):{'boardtile':'blank'},

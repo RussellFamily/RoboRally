@@ -1,11 +1,4 @@
 TO DO LIST:
 
-1. How to handle move actions with players who are dead or shutdown during register execution
-2. Build test board and game simulation to test whether the execution of registers works - only include flags on first board.
-
-
-
-
-Questions:
-1. Do I build the pregame stuff in terminal interface, or do i try to create a gui outright?
-	- I will select all commands from terminal, display to gui the results for first iteration
+1. Build 5 boards from robo rally, except for parts that haven't been included as features yet
+2. Fix the laser image generation to show where lasers will fire
