@@ -1099,9 +1099,9 @@ class Boardspace():
 		elif orientation==(0,1):
 			self.boardtile_image= pygame.transform.rotate(self.boardtile_image,180)
 		elif orientation==(1,0):
-			self.boardtile_image= pygame.transform.rotate(self.boardtile_image,90)
-		elif orientation==(-1,0):
 			self.boardtile_image= pygame.transform.rotate(self.boardtile_image,-90)
+		elif orientation==(-1,0):
+			self.boardtile_image= pygame.transform.rotate(self.boardtile_image,90)
 		else:
 			print 'ERROR, INVALID ORIENTATION'
 ########################

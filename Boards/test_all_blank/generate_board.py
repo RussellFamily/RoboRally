@@ -1,12 +1,19 @@
 #write out each board element space as a dictionary
 #
 #Notations being used so far:
-# wall: indicates a wall on the board. must be prefaced by n_,w_,e_,or s_ to indicate location
-# laser: indicates the origin of a laser. must be prefaced by we,ew,ns, or sn. This two character code represents 1. the wall of origin and 2. the firing direction. So 'we_laser' represents a laser on the west wall firing east.
-# cb: indicates a conveyor belt.  must be prefaced by n,s,e,w or combinations of the two. n,s,e,and w are straight arrows, while combinations of 2 represent incoming direction and outgoing direction (with rotation). For example, if a belt was 'ne_cb', the belt would be going north and turning east.
-# checkpoint: indicates a checkpoint is in this location.
+#Each board tile is identified in a dictionary by its tuple
+#each dictionary can be composed of the following keys:
+#boardtile (MANDATORY) - identifies what is the underlying type of tile to be used
+#if it is blank, checkpoint, or pit, it will be identified as such
+#if it is a conveyor belt, the specific kind of conveyor belt will be listed later
+#walls - provides a list of tuples on locations of walls within the tile
+#lasers - provides a list of tuples on locations of walls within the tile
+#conveyorbelt - provides a dictionary of items representing the type of conveyor belt, the speed, and the orientation of it
+#example: 'cb':{'conveyor_type':'straight','speed':'slow','orientation':(0,1)} will produce a straight, slow conveyor belt pointing down
 import yaml
 
+
+#Reminder, (x,y) refers to x as the column, y as the row -> (column, row)
 board={(0,0):{'boardtile':'blank'},
 (0,1):{'boardtile':'blank'},
 (0,2):{'boardtile':'blank'},
