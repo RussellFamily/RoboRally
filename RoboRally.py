@@ -243,6 +243,8 @@ class Game():
 		for i in range(1,6):
 			#execute player moves
 			self.execute_move_phase(i)
+			#test pit
+			
 			#print position to check if update is working
 			for player in self.playerlist:
 				print player.robot.position,player.robot.direction
@@ -358,11 +360,12 @@ class Game():
 
 	#checks if the robot has fallen into pit
 	def check_pit(self,robot):
+		print self.board.board_dict[tuple(robot.position)].pit
 		if robot.dead==False:
 			if self.board.board_dict[tuple(robot.position)].pit==True:
 				robot.dead=True
-				print robot.name+' fell into a pit!\n'
-				player.robot.position=(-1,-1)
+				print robot.robot_name+' fell into a pit!\n'
+				robot.position=(-1,-1)
 
 	def game_setup(self):
 		#Determine how many players are going to be playing the game
@@ -530,6 +533,7 @@ class Game():
 			robot.position=robot.position+direction
 			#test for death conditions
 			self.check_offboard(robot)
+			print '\n\nCHECKING PIT\n\n'
 			self.check_pit(robot)
 
 			return 'no_wall'
@@ -703,26 +707,27 @@ class Game():
 		#assign the destination as the robots new position
 		robot.position=destination
 		#check to see if new square is a cb
-		if self.board.board_dict[tuple(destination)].cb[0]==True:
-			#if so, check conveyor in dictionary for appropriate  rotation if any
-			#rotate outgoing vector to be the incoming vector to check against
-			incoming_direction=tuple(self.rotate_vector(np.array(outgoing_direction),180))
-			#just to make sure, we will see if the origin direction is in the dictionary before comparing
-			print self.board.board_dict[tuple(robot.position)].cb[1].conveyor_in
-			if incoming_direction in self.board.board_dict[tuple(robot.position)].cb[1].conveyor_in:
-				#now, determine if there is any rotation
-				incoming_value=self.board.board_dict[tuple(robot.position)].cb[1].conveyor_in[incoming_direction]
-				if incoming_value=='straight':
-					pass
-				elif incoming_value=='rotate_left':
-					self.rotate_robot(-90,robot)
-				elif incoming_value=='rotate_right':
-					self.rotate_robot(90,robot)
+		if destination[0]>=0 and destination[0]<=11 and destination[1]>=0 and destination[1]<=11:
+			if self.board.board_dict[tuple(destination)].cb[0]==True:
+				#if so, check conveyor in dictionary for appropriate  rotation if any
+				#rotate outgoing vector to be the incoming vector to check against
+				incoming_direction=tuple(self.rotate_vector(np.array(outgoing_direction),180))
+				#just to make sure, we will see if the origin direction is in the dictionary before comparing
+				print self.board.board_dict[tuple(robot.position)].cb[1].conveyor_in
+				if incoming_direction in self.board.board_dict[tuple(robot.position)].cb[1].conveyor_in:
+					#now, determine if there is any rotation
+					incoming_value=self.board.board_dict[tuple(robot.position)].cb[1].conveyor_in[incoming_direction]
+					if incoming_value=='straight':
+						pass
+					elif incoming_value=='rotate_left':
+						self.rotate_robot(-90,robot)
+					elif incoming_value=='rotate_right':
+						self.rotate_robot(90,robot)
+					else:
+						print 'ERROR, invalid value for key'
 				else:
-					print 'ERROR, invalid value for key'
-			else:
-				print 'Key not found in dictionary, recheck board setup'
-
+					print 'Key not found in dictionary, recheck board setup'
+		self.check_offboard(robot)
 	def conveyor_collision_detection(self, queue):
 		#locked_list stores the names of robots who have the locked condition for a conveyor belt
 		#the locked condition occurs when a robot is unable to progress on the conveyor belt
@@ -749,13 +754,14 @@ class Game():
 		print locked_list_robots
 		for robot in [robot for robot in queue if robot.robot_name not in locked_list_robots]:
 			robot_destination=tuple(robot.position+np.array(self.board.board_dict[tuple(robot.position)].cb[1].conveyor_out))
-			if self.board.board_dict[robot_destination].cb[0]==False:
-				for other_player in self.playerlist:
-					if tuple(other_player.robot.position)==robot_destination:
-						#after all these loops and conditions, we found the one that locks the robot
-						if robot.robot_name not in locked_list_robots:
-							locked_list_robots.append(robot.robot_name)
-							locked_list_locations.append(tuple(robot.position))
+			if robot_destination[0]>=0 and robot_destination[0]<=11 and robot_destination[1]>=0 and robot_destination[1]<=11:
+				if self.board.board_dict[robot_destination].cb[0]==False:
+					for other_player in self.playerlist:
+						if tuple(other_player.robot.position)==robot_destination:
+							#after all these loops and conditions, we found the one that locks the robot
+							if robot.robot_name not in locked_list_robots:
+								locked_list_robots.append(robot.robot_name)
+								locked_list_locations.append(tuple(robot.position))
 
 		#whew, alright, now to check to see if other robots that have not been marked as locked are impacted by the locking mechanism
 		#needs to be a while loop that checks to see if there is no new locks before breaking
@@ -1040,8 +1046,9 @@ class Boardspace():
 		self.flag_num=None
 		#define load board tile
 		self.boardtile_image=None
-		self.setup_boardspace(boardtile_dict)
 		self.pit=False
+		self.setup_boardspace(boardtile_dict)
+		
 
 	#old function?
 	#def load_board_tile(self):

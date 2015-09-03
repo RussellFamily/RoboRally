@@ -1,4 +1,13 @@
 TO DO LIST:
 
 1. Build 5 boards from robo rally, except for parts that haven't been included as features yet
+	1.Circuit Trap -> DONE
+	2.Island -> DONE
+	3.Cross -> DONE
+	4.
+	5.
 2. Fix the laser image generation to show where lasers will fire
+	1. DONE -> pits reinitialized to false after reading in board dict info, moving prior to function call fixed issue
+3. Fix conveyors near board edge
+	1.No  longer errors out, but a dictionary location error occurred, check into that
+4. Fix Robots Not Falling into Pits
