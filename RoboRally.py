@@ -6,6 +6,8 @@ import pygame
 import numpy as np
 import math
 import ConfigParser
+import os
+
 
 #Classes used in the game
 ###########################
@@ -105,7 +107,21 @@ class Game():
 		
 		#run the preassigned registers
 		self.complete_registers()
-
+	
+	def get_boards(self):
+		boards=os.listdir('./Boards')
+		while True:
+			for i,board in enumerate(boards):
+				print str(i)+'. '+board
+			boardnum=raw_input('Which board would you like to play on? Please select one of the numbers above.')
+			try:
+				newboardnum=int(boardnum)
+				board=boards[newboardnum]
+				return board
+			except:
+				print 'That is not a valid entry, please try again.'
+	
+	
 	def run_game(self):
 		#get the board and players setup to play
 		self.game_setup()
@@ -209,6 +225,7 @@ class Game():
 		#allow each player to shutdown their robot for the following turn:
 		self.determine_shutdown()
 		#execute all of the register phases
+		self.display.blitscreen(self)
 		self.complete_registers()
 		#update shutdown flags for robots
 		self.update_shutdown()
@@ -246,8 +263,7 @@ class Game():
 			#test pit
 			
 			#print position to check if update is working
-			for player in self.playerlist:
-				print player.robot.position,player.robot.direction
+			
 			#this is where board elements will go
 			self.execute_board_elements()
 			#fire the lasers!
@@ -401,7 +417,7 @@ class Game():
 		#Determine board to be used - for now will be a test board - and load the dictionary of the board
 
 		#implement named test board, needs to be changed to alternating boards later
-		self.board=Board('test_lasers')
+		self.board=Board(self.get_boards())
 		self.display=Display(self.board)
 		#Convert board dict to usable input
 		#TODO
@@ -498,6 +514,7 @@ class Game():
 					if tuple(direction*-1) in self.board.board_dict[tuple(destination_position)].walls:
 						wall_collision=True
 		except:
+			print 'ERROR IN MOVE ONE SQUARE'
 			print robot.robot_name
 			print 'death',robot.dead
 			print 'curpos',current_position
@@ -523,7 +540,6 @@ class Game():
 					wall_collision=True
 
 		#print out robot variables to understand what the variables are after each movement
-		print robot.robot_name,'wall_collision',wall_collision,'robot_collision',robot_collision,'position',robot.position
 
 
 		if wall_collision==True:
@@ -533,7 +549,6 @@ class Game():
 			robot.position=robot.position+direction
 			#test for death conditions
 			self.check_offboard(robot)
-			print '\n\nCHECKING PIT\n\n'
 			self.check_pit(robot)
 
 			return 'no_wall'
@@ -583,7 +598,6 @@ class Game():
 	#this function currently only handles single laser board fire, needs to be modified for double lasers
 	#these could be stored as two instances of the laser in the board space object? then they can be iterated over
 	def fire_laser(self,location,direction,origin):
-		print 'firing laser!',location,direction,origin
 		current_space=location.copy()
 		laser_target_flag=False
 		target=None
@@ -597,7 +611,6 @@ class Game():
 					return player.robot
 		#check for current wall space, check if next space is off board, then advance to next space if not, check closest wall, then check for robot in the square
 		while not laser_target_flag:
-			print 'still firing',current_space,far_wall,direction
 			#check the far wall on the current space
 			if tuple(far_wall) in self.board.board_dict[tuple(current_space)].walls:
 				#laser has hit a wall, and stopsce
@@ -633,14 +646,12 @@ class Game():
 				to_fire.append(laser_hit)
 		return to_fire
 	def board_laser_fire(self):
-		print 'boardlasertime'
 		#fire board lasers
 		#array of lasers to be stored on a stack
 		to_fire=[]
 		for laser_loc in self.board.lasers:
 			lasers=self.board.board_dict[tuple(laser_loc)].lasers
 			for laser in lasers:
-				print 'firing lazer'
 				#note: the lasers stored in the dictionary are the location with respect to the board square on where to position the laser
 				#because of this, we need to rotate the direction of the laser 180 degrees
 				laser_origin,laser_direction=laser_loc,self.rotate_vector(np.array(laser),180)
@@ -670,6 +681,7 @@ class Game():
 						print 'Invalid response. Please enter y or n.'
 					elif answer=='y':
 						player.robot.archive=player.robot.position
+						break
 
 
 	#Board elements! Only working on conveyor belts for this iteration, but it will all be wrapped int the board element function
@@ -721,8 +733,10 @@ class Game():
 						pass
 					elif incoming_value=='rotate_left':
 						self.rotate_robot(-90,robot)
+						print 'rotating robot left!'
 					elif incoming_value=='rotate_right':
 						self.rotate_robot(90,robot)
+						print 'rotating robot right!'
 					else:
 						print 'ERROR, invalid value for key'
 				else:
@@ -1164,14 +1178,14 @@ class Conveyor_Belt():
 			#self.conveyor_out=tuple(self.rotate_vector(np.array(self.conveyor_out),-90))
 			rotated_cb_dict={}
 			for key,value in cb_dict.iteritems():
-				new_key=tuple(self.rotate_vector(np.array(key),-90))
+				new_key=tuple(self.rotate_vector(np.array(key),90))
 				rotated_cb_dict[new_key]=value
 		elif self.orientation==(-1,0):
 			#rotate so directino is to the left
 			#self.conveyor_out=tuple(self.rotate_vector(np.array(self.conveyor_out),90))
 			rotated_cb_dict={}
 			for key,value in cb_dict.iteritems():
-				new_key=tuple(self.rotate_vector(np.array(key),90))
+				new_key=tuple(self.rotate_vector(np.array(key),-90))
 				rotated_cb_dict[new_key]=value
 		return rotated_cb_dict
 	def rotate_vector(self, dir_array,theta_deg):

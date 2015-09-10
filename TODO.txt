@@ -7,7 +7,32 @@ TO DO LIST:
 	4.
 	5.
 2. Fix the laser image generation to show where lasers will fire
-	1. DONE -> pits reinitialized to false after reading in board dict info, moving prior to function call fixed issue
 3. Fix conveyors near board edge
-	1.No  longer errors out, but a dictionary location error occurred, check into that
-4. Fix Robots Not Falling into Pits
+	1.No  longer errors out, but a dictionary location error occurred, check into that if it happens again
+4. Fix checkpoint update text to break out of while loop
+	->Added break statement DONE
+5. Rotating Conveyor belt didn't rotate robot, check into that
+	->Looks like the rotate vectors rotated the incoming vectors incorrectly, rotated them in other direction for correct result ->DONE
+6. robot1 is off the board!
+
+Traceback (most recent call last):
+  File "playgame.py", line 3, in <module>
+    x.run_game()
+  File "/home/pm8k/Documents/RoboRally/RoboRally.py", line 130, in run_game
+    self.play_game_round()
+  File "/home/pm8k/Documents/RoboRally/RoboRally.py", line 229, in play_game_round
+    self.complete_registers()
+  File "/home/pm8k/Documents/RoboRally/RoboRally.py", line 262, in complete_registers
+    self.execute_move_phase(i)
+  File "/home/pm8k/Documents/RoboRally/RoboRally.py", line 463, in execute_move_phase
+    self.execute_move(register,player.robot)
+  File "/home/pm8k/Documents/RoboRally/RoboRally.py", line 480, in execute_move
+    temp=self.move_one_square(robot,robot.direction)
+  File "/home/pm8k/Documents/RoboRally/RoboRally.py", line 552, in move_one_square
+    self.check_pit(robot)
+  File "/home/pm8k/Documents/RoboRally/RoboRally.py", line 379, in check_pit
+    print self.board.board_dict[tuple(robot.position)].pit
+KeyError: (-1, -1)
+
+
+FIX THIS
