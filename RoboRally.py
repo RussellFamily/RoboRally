@@ -14,12 +14,14 @@ import os
 #Game Object that runs the display, handling updates to the screen
 ###########################
 class Display():
+
 	def __init__(self,board):
 		pygame.init()
 		self.screensize=(1200,1200)
 		self.screen=pygame.display.set_mode(self.screensize)
 		self.board=board
 		#testing
+		
 	def blitscreen(self,Game):
 		self.screen.fill((0,0,0))
 		#blit boardtiles
@@ -46,24 +48,6 @@ class Display():
 			self.screen.blit(player.robot.image_dict[tuple(player.robot.direction)],(player.robot.position[0]*100,player.robot.position[1]*100))
 		pygame.display.update()
 
-	#currently the blitscreen needs the positions of the robots, so i'm gonna grab i
-	#it from the Game object, there is probably a better way to do this
-	#now defunct blitscreen function
-	#instead load images upon game creation, instead of loading images
-	#everytime we call the blitscreen function
-	"""def blitscreen(self,Game):
-		self.screen.fill((0,0,0))
-		for row in range(len(self.board)):
-			for col in range(len(self.board[row])):
-				image=pygame.image.load('Images/Board_Elements/'+self.board[row][col]+'.jpg')
-				reducedimage=pygame.transform.scale(image,(100,100))
-				self.screen.blit(reducedimage,(row*100,col*100))
-		for player in Game.playerlist:
-			image=pygame.image.load('Images/Robots/'+player.robot.robot_name+'.jpg')
-			reducedimage=pygame.transform.scale(image,(100,100))
-			self.screen.blit(reducedimage,(player.robot.position[0]*100,player.robot.position[1]*100))
-
-		pygame.display.update()"""
 
 ###########################
 #Game object that starts each game and controls game flow
@@ -71,7 +55,8 @@ class Display():
 
 class Game():
 
-	
+	#######################################################################################################################################
+	#initialize parameters upon class creation
 	def __init__(self):
 		self.playerlist=[]
 		self.deck=Deck()
@@ -79,6 +64,13 @@ class Game():
 		#default setting for now, need to implement selection of flags to place on board, or build it into the board property
 		self.num_flags=5
 
+	#######################################################################################################################################
+	#Functions called test or play the game, as well as setup the game to play
+	#######################################################################################################################################
+
+	#######################################################################################################################################
+	#Run a test suite based on a configuration file for board and a preset collection of moves
+	#currently only plays one hand, ideally will be made to play an entire game to ensure all facets are exact.
 	def run_test_suite(self):
 		configParser = ConfigParser.RawConfigParser()   
 		configFilePath = r'test_config.cfg'
@@ -96,7 +88,6 @@ class Game():
 			player.robot.direction=np.array([0,1])
 			player.robot.archive=player.robot.position
 		
-		
 		#create card objects and assign them to the appropriate registers
 		for player in self.playerlist:
 			for i in range(1,6):
@@ -104,10 +95,75 @@ class Game():
 				card=Card(configParser.get(player.name, priority),configParser.get(player.name, move))
 				player.robot.registers[i].card=card
 		
-		
 		#run the preassigned registers
 		self.complete_registers()
+	#######################################################################################################################################
+	#main function that iterates over game rounds until the game is determined to be over
+	def run_game(self):
+		#get the board and players setup to play
+		self.game_setup()
+		#run game
+		while not self.end:
+			self.play_game_round()
+		print 'GAME OVER!!!!!'
 	
+	#######################################################################################################################################
+	#set up the initial parameters of the game, such as determining information from the players to be read in
+	def game_setup(self):
+		#Determine how many players are going to be playing the game
+		num_allowed_players=[2,3,4]
+		print 'Welcome to Robo Rally!\n'
+		while True:
+			try:
+				num_players=int(raw_input('How many players are playing? Valid numbers are 2, 3, and 4.\n'))
+			except:
+				print 'Not a valid value. Please try again.'
+				continue
+			else:
+				if num_players in num_allowed_players:
+					break
+				else:
+					print 'Not a valid number of players. Please try again.'
+
+		#READ in the names for each player
+		#maybe functionalize to reduce code here
+		playernames=[]
+		for i in range(num_players):
+			while True:
+				playername=raw_input('What is the name of Player '+str(i)+'?')
+				if len(playername)==0:
+					print 'Not a valid name. The length of the name must be at least 1 character'
+				elif len(playername)>10:
+					print 'Not a valid name. The length of the name is too long.'
+				elif playername in playernames:
+					print 'Not a valid name.  That name has already been taken. Please choose another name'
+				else:
+					break
+			playernames.append(playername)
+		#Determine board to be used - for now will be a test board - and load the dictionary of the board
+
+		#implement named test board, needs to be changed to alternating boards later
+		self.board=Board(self.get_boards())
+		self.display=Display(self.board)
+		#Convert board dict to usable input
+		#TODO
+
+
+		#Assign robots to players - default arrangement for now
+		#TODO - make dynamic
+		robots=['robot1','robot2','robot3','robot4']
+		#list comprehension to create list of players
+		self.playerlist=[Player(player,robots[i]) for i,player in enumerate(playernames)]
+		#The game now has a list of the players, their names, and which robots they are playing!
+		#Setup is complete, time to play the game
+		#initialize robots onto the bottom row for now, will create additional starting positions later
+		for i,player in enumerate(self.playerlist):
+			player.robot.position=np.array([i,0])
+			player.robot.direction=np.array([0,1])
+			player.robot.archive=player.robot.position	
+
+	#######################################################################################################################################
+	#read in the board to be used for the game (called in game_setup)
 	def get_boards(self):
 		boards=os.listdir('./Boards')
 		while True:
@@ -120,16 +176,62 @@ class Game():
 				return board
 			except:
 				print 'That is not a valid entry, please try again.'
-	
-	
-	def run_game(self):
-		#get the board and players setup to play
-		self.game_setup()
-		#run game
-		while not self.end:
-			self.play_game_round()
-		print 'GAME OVER!!!!!'
+	#######################################################################################################################################
+	#plays through an entire round from dealing cards to finishing up end of round activities
+	def play_game_round(self):
 
+		#iterate through rounds of play
+		#create display with each players robot
+		self.display.blitscreen(self)
+		#first step is to deal out cards to all players
+		self.deal_hands()
+		#next, each player has to choose which order of cards they will be dealing out
+		#for the first iteration, each player will take turns individually choosing all of his/her cards through the terminal
+		#they will be told what cards they have in hand, which registers currently have cards chosen in them, and which ones are locked
+		#finally they will confirm if the choices are what they will make them out to be
+		self.assign_registers()
+		#allow each player to shutdown their robot for the following turn:
+		self.determine_shutdown()
+		#execute all of the register phases
+		self.display.blitscreen(self)
+		self.complete_registers()
+		#update shutdown flags for robots
+		self.update_shutdown()
+		#respawn any dead robots
+		self.respawn_dead_robots()
+		#discard unlocked registers and extra cards in hands to all players
+		self.cleanup()
+
+	#######################################################################################################################################
+	#Functions called in the play_game_round function, in order of use
+	#######################################################################################################################################
+
+	#######################################################################################################################################
+	#Function that deals out cards to all players
+	def deal_hands(self):
+		for player in self.playerlist:
+			if player.robot.shutdown==True:
+				pass
+			else:
+				for i in range(9-player.robot.damage):
+					self.deal_card(player)
+
+	#######################################################################################################################################
+	#Function used to deal out a single card to a player.  Used to check if deck is also empty when dealing
+	def deal_card(self,player):
+		if len(self.deck.draw) == 0:
+			self.deck.shuffle_deck()
+		player.hand.append(self.deck.draw.pop())
+
+	#######################################################################################################################################
+	#wrapper function to iterate over players to determine if they need to pick cards for their registers
+	def assign_registers(self):
+		for player in self.playerlist:
+			if not player.robot.shutdown and not player.robot.dead:
+				self.read_player_choices(player)
+	
+	#######################################################################################################################################
+	#function that reads in a player's choice for all available registers
 	def read_player_choices(self,player):
 		while True:
 			#print hand and registers
@@ -183,57 +285,9 @@ class Game():
 			if answer=='y':
 				break
 
-	def assign_registers(self):
-		for player in self.playerlist:
-			if not player.robot.shutdown and not player.robot.dead:
-				self.read_player_choices(player)
-
-	#ADDED: function also checks for any repairs to be made to robots
-	#only handles single checkpoints for now
-	#function that will restore cards to the discard pile out of players hands, except those that are shutdown
-	def cleanup(self):
-		#determine any damage removal from checkpoints
-		for player in self.playerlist:
-			if self.board.board_dict[tuple(player.robot.position)].checkpoint==True:
-				if player.robot.damage>0:
-					player.robot.heal_damage(1)
-
-		#cleanup cards for the next round
-		for player in self.playerlist:
-
-			for card in player.hand:
-				self.deck.discard=self.deck.discard+player.hand
-				player.hand=[]
-			if player.robot.shutdown==False:
-				for register_num, register in player.robot.registers.iteritems():
-					if register.register_lock==False:
-						self.deck.discard.append(register.card)
-						register.card=None
-
-	def play_game_round(self):
-
-		#iterate through rounds of play
-		#create display with each players robot
-		self.display.blitscreen(self)
-		#first step is to deal out cards to all players
-		self.deal_hands()
-		#next, each player has to choose which order of cards they will be dealing out
-		#for the first iteration, each player will take turns individually choosing all of his/her cards through the terminal
-		#they will be told what cards they have in hand, which registers currently have cards chosen in them, and which ones are locked
-		#finally they will confirm if the choices are what they will make them out to be
-		self.assign_registers()
-		#allow each player to shutdown their robot for the following turn:
-		self.determine_shutdown()
-		#execute all of the register phases
-		self.display.blitscreen(self)
-		self.complete_registers()
-		#update shutdown flags for robots
-		self.update_shutdown()
-		#respawn any dead robots
-		self.respawn_dead_robots()
-		#discard unlocked registers and extra cards in hands to all players
-		self.cleanup()
-
+	#######################################################################################################################################
+	#for each player, determine if they want to shutdown for the next round
+	#NOTE: This could be incorporated into the assign registers function, need to determine which is better functionally
 	def determine_shutdown(self):
 		for player in self.playerlist:
 			while True:
@@ -245,6 +299,8 @@ class Game():
 				else:
 					print 'Invalid response'
 
+	#######################################################################################################################################
+	#Function that iterates over the 5 register phases and executes board elements
 	def complete_registers(self):
 		#print final registers before executing phases
 		for player in self.playerlist:
@@ -277,7 +333,9 @@ class Game():
 		#allows for a single round of testing and quitting
 		quitgame=raw_input('Do you wish to quit the game? (q)')
 		if quitgame=='q':
-			sys.exit()
+			sys.exit()	
+
+	#######################################################################################################################################
 	#updates robots who were shut down and who are about to shut down
 	def update_shutdown(self):
 		# if a robot is not dead and was previously shutdown, remove the shutdown condition
@@ -293,6 +351,7 @@ class Game():
 				for register_num,register in player.robot.registers.iteritems():
 					register.register_lock=False
 
+	#######################################################################################################################################
 	def respawn_dead_robots(self):
 		#for those robots that have died, determine respawn positions
 		for player in self.playerlist:
@@ -359,7 +418,30 @@ class Game():
 							print 'ERROR IN ASSIGNING DIRECTION'
 							player.robot.direction=np.array([-1,-1])
 						break
-	
+
+	#######################################################################################################################################
+	#ADDED: function also checks for any repairs to be made to robots
+	#only handles single checkpoints for now
+	#function that will restore cards to the discard pile out of players hands, except those that are shutdown
+	def cleanup(self):
+		#determine any damage removal from checkpoints
+		for player in self.playerlist:
+			if self.board.board_dict[tuple(player.robot.position)].checkpoint==True:
+				if player.robot.damage>0:
+					player.robot.heal_damage(1)
+
+		#cleanup cards for the next round
+		for player in self.playerlist:
+
+			for card in player.hand:
+				self.deck.discard=self.deck.discard+player.hand
+				player.hand=[]
+			if player.robot.shutdown==False:
+				for register_num, register in player.robot.registers.iteritems():
+					if register.register_lock==False:
+						self.deck.discard.append(register.card)
+						register.card=None
+
 	def check_offboard(self,robot):
 		if robot.dead==True:
 			#robot is already dead, so do nothing
@@ -376,81 +458,24 @@ class Game():
 
 	#checks if the robot has fallen into pit
 	def check_pit(self,robot):
-		print self.board.board_dict[tuple(robot.position)].pit
 		if robot.dead==False:
 			if self.board.board_dict[tuple(robot.position)].pit==True:
 				robot.dead=True
 				print robot.robot_name+' fell into a pit!\n'
 				robot.position=(-1,-1)
 
-	def game_setup(self):
-		#Determine how many players are going to be playing the game
-		num_allowed_players=[2,3,4]
-		print 'Welcome to Robo Rally!\n'
-		while True:
-			try:
-				num_players=int(raw_input('How many players are playing? Valid numbers are 2, 3, and 4.\n'))
-			except:
-				print 'Not a valid value. Please try again.'
-				continue
-			else:
-				if num_players in num_allowed_players:
-					break
-				else:
-					print 'Not a valid number of players. Please try again.'
+	
+	#######################################################################################################################################			
+	#######################################################################################################################################
+	#Functions called in the complete register phase, grouped by type
+	#######################################################################################################################################
+	#######################################################################################################################################
 
-		#READ in the names for each player
-		#maybe functionalize to reduce code here
-		playernames=[]
-		for i in range(num_players):
-			while True:
-				playername=raw_input('What is the name of Player '+str(i)+'?')
-				if len(playername)==0:
-					print 'Not a valid name. The length of the name must be at least 1 character'
-				elif len(playername)>10:
-					print 'Not a valid name. The length of the name is too long.'
-				elif playername in playernames:
-					print 'Not a valid name.  That name has already been taken. Please choose another name'
-				else:
-					break
-			playernames.append(playername)
-		#Determine board to be used - for now will be a test board - and load the dictionary of the board
-
-		#implement named test board, needs to be changed to alternating boards later
-		self.board=Board(self.get_boards())
-		self.display=Display(self.board)
-		#Convert board dict to usable input
-		#TODO
-
-
-		#Assign robots to players - default arrangement for now
-		#TODO - make dynamic
-		robots=['robot1','robot2','robot3','robot4']
-		#list comprehension to create list of players
-		self.playerlist=[Player(player,robots[i]) for i,player in enumerate(playernames)]
-		#The game now has a list of the players, their names, and which robots they are playing!
-		#Setup is complete, time to play the game
-		#initialize robots onto the bottom row for now, will create additional starting positions later
-		for i,player in enumerate(self.playerlist):
-			player.robot.position=np.array([i,0])
-			player.robot.direction=np.array([0,1])
-			player.robot.archive=player.robot.position
-
-	#Function that deals out cards to all players
-	def deal_hands(self):
-		for player in self.playerlist:
-			if player.robot.shutdown==True:
-				pass
-			else:
-				for i in range(9-player.robot.damage):
-					self.deal_card(player)
-
-	#Function used to deal out a single card to a player.  Used to check if deck is also empty when dealing
-	def deal_card(self,player):
-		if len(self.deck.draw) == 0:
-			self.deck.shuffle_deck()
-		player.hand.append(self.deck.draw.pop())
-
+	#######################################################################################################################################
+	#Functions related to Moving a Robot
+	#######################################################################################################################################
+	
+	#######################################################################################################################################
 	#Execute move actions of all robots by sorting moves of active players
 	def execute_move_phase(self,register):
 		moveorder=[player for player in self.playerlist if player.robot.dead==False and player.robot.shutdown==False]
@@ -464,12 +489,8 @@ class Game():
 				self.display.blitscreen(self)
 				raw_input('press any key to continue')
 
-
-	#move functions are now handled by the Game class, so that it can handle collisions
+	#######################################################################################################################################
 	#Execute individual move action specified by a movement card
-	#the steps to be performed for each is listed here
-	#for now, movement will be confined to a grid with no restrictions.  Collisions for walls when moving will be handled later
-	#probably need another function to handle what happens during a move
 	def execute_move(self,register,robot):
 		movetype=robot.registers[register].card.cardtype
 		if movetype=='Move_3':
@@ -495,9 +516,9 @@ class Game():
 		else:
 			print 'NOT A VALID MOVE TYPE'
 
-	#time to include collision code for other robots as well as walls
+	#######################################################################################################################################
+	#Function that will check the result of moving a robot one square, and advance it if possible
 	#other robots should be pushed one square when moved into the way of another robot, and should stop when a movement would coincide with a wall
-	#this needs to be recursively called for each robot that may
 	def move_one_square(self,robot,direction,backup=False):
 		#test to see if the robot is dead, if it is we won't do any collision testing
 		if robot.dead==True:
@@ -521,8 +542,6 @@ class Game():
 			print 'robdir',robot.direction
 			print 'dir',direction
 
-
-
 		robot_collision=False
 
 		#test for collision of robots
@@ -539,9 +558,6 @@ class Game():
 				if collision_result=='wall':
 					wall_collision=True
 
-		#print out robot variables to understand what the variables are after each movement
-
-
 		if wall_collision==True:
 			return 'wall'
 		else:
@@ -553,12 +569,16 @@ class Game():
 
 			return 'no_wall'
 
+	#######################################################################################################################################
+	#Function Rotates a Robot by a specified angle
 	def rotate_robot(self,theta,robot):
 		#rotate direction vector of the robot
 		robot.direction=self.rotate_vector(robot.direction,theta)
 		#robot the image of the robot to reflect the rotation of the robot
 		#robot.image=pygame.transform.rotate(robot.image,-1*theta)
-	#function that handles rotation of a vector by 90,-90, or 180 degrees and returns the resulting vector
+
+	#######################################################################################################################################
+	#Function that handles rotation of a vector by 90,-90, or 180 degrees and returns the resulting vector
 	#reminder, since the convention of pygame is to treat the origin as the upper left corner,
 	#we are using an inverted unit circle, so the signs are flipped for rotations
 	def rotate_vector(self, dir_array,theta_deg):
@@ -569,9 +589,10 @@ class Game():
 		return np.around(final_vector,0)
 
 
-	#need to write a function that handles the laser fire round, both of robots and of board lasers
-	#neither board lasers nor robot lasers pass through a robot, so the laser only fires until it hits a robot, wall, or edge of the board
-	#timing for lasers is simultaneous
+	#######################################################################################################################################
+	#Functions related to Firing Lasers
+	#######################################################################################################################################
+	#Notes on firing lasers:
 	#for future use of option cards, this is the steps:
 	#1. resolve all damaging weapons first (simultaneously)
 	#2. resolve all moving and other weapons in order of robot priority card numbers
@@ -584,19 +605,22 @@ class Game():
 	#The main difference between board and laser fire is the origin square of the laser:
 	#board lasers will hit the square they are in, while robot lasers start in the square in the direction they are facing
 	#(unless there happens to be a wall immediately in the direction he is facing
-
 	#another note: lasers are being stored as tuples, and locations as numpy arrays.  the function should take
 	#a numpy array in order to do vector addition, and check against a tuple-ized version for value comparison
 
+	#######################################################################################################################################
+	#Function that calls board and robot laser fire, determines all hit recipients, and assigns all damage
 	def fire_laser_phase(self):
 		fire_list=self.board_laser_fire()+self.robot_laser_fire()
 		for robot in fire_list:
 			robot.assign_damage(1)
 			print robot.robot_name+' just took a point of laser damage! They have now taken ' + str(robot.damage) + ' damage!'
 
-
+	#######################################################################################################################################
+	#Function that fires an individual laser 
 	#this function currently only handles single laser board fire, needs to be modified for double lasers
 	#these could be stored as two instances of the laser in the board space object? then they can be iterated over
+	#or there is another parameter in the board space laser object that stores how many lasers are firing (then it doesn't have to iterate over each when determing a target)
 	def fire_laser(self,location,direction,origin):
 		current_space=location.copy()
 		laser_target_flag=False
@@ -636,7 +660,9 @@ class Game():
 
 		#if it breaks out after not finding a robot, return None
 		return None
-
+	
+	#######################################################################################################################################
+	#Function iterates over each robot, allowing it to fire its laser, appending to a 'hit' list which is returned
 	def robot_laser_fire(self):
 		to_fire=[]
 		for player in [player for player in self.playerlist if player.robot.dead==False]:
@@ -645,6 +671,9 @@ class Game():
 			if laser_hit is not None:
 				to_fire.append(laser_hit)
 		return to_fire
+
+	#######################################################################################################################################
+	#Function iterates over each board laser, allowing it to fire and appending to a 'hit' list which is returned
 	def board_laser_fire(self):
 		#fire board lasers
 		#array of lasers to be stored on a stack
@@ -662,6 +691,11 @@ class Game():
 					to_fire.append(laser_hit)
 		return to_fire
 
+	#######################################################################################################################################
+	#Function to test for checkpoints during the game
+	#######################################################################################################################################
+
+	#######################################################################################################################################
 	#checkpoint phase of the register, allow for robots who are on a checkpoint to update their archive, and touch flags
 	def checkpoint_phase(self):
 		for player in [player for player in self.playerlist if player.robot.dead==False]:
@@ -683,15 +717,21 @@ class Game():
 						player.robot.archive=player.robot.position
 						break
 
+	#######################################################################################################################################
+	#Function to execute board elements during the game
+	#######################################################################################################################################
 
+	#######################################################################################################################################
 	#Board elements! Only working on conveyor belts for this iteration, but it will all be wrapped int the board element function
-
 	def execute_board_elements(self):
 		#conveyor belts!
 		self.execute_conveyor_belts()
+
+	#######################################################################################################################################
+	#Functions for Conveyor Belts
+	#######################################################################################################################################
 	#Conveyor Belts!
 	#only need to execute conveyor belt spaces that robots are on, use their keys to check if conveyor belts exist
-
 	#notes for thoughts behind convention to program conveyor belts:
 	#the trick with conveyor belts is when the following square will rotate the robot in some fashion
 	#to be dynamic, the previous square has no knowledge of the rotation: the robot MUST check the square he is entering
@@ -707,14 +747,13 @@ class Game():
 	#QUESTION: will the conveyor belt be its own object to check against?
 	#i believe it should be, and the boardspace links to this object which it can check against
 	#it will mostly be a storage of values relative to the space
-	
-	#TODO FIX DIRECTION
-	
+
+	#######################################################################################################################################		
+	#Function advances a robot on a conveyor belt one space, checking for stalemates and if robot ends up off board
 	def advance_conveyor_space(self,robot):
 		#we need to advance the robot one square along the path of the conveyor belt, see if destination is a cb, then check for rotation
 		origin=robot.position
 		outgoing_direction=self.board.board_dict[tuple(robot.position)].cb[1].conveyor_out
-		print outgoing_direction
 		destination=robot.position+np.array(outgoing_direction)
 		#assign the destination as the robots new position
 		robot.position=destination
@@ -725,7 +764,6 @@ class Game():
 				#rotate outgoing vector to be the incoming vector to check against
 				incoming_direction=tuple(self.rotate_vector(np.array(outgoing_direction),180))
 				#just to make sure, we will see if the origin direction is in the dictionary before comparing
-				print self.board.board_dict[tuple(robot.position)].cb[1].conveyor_in
 				if incoming_direction in self.board.board_dict[tuple(robot.position)].cb[1].conveyor_in:
 					#now, determine if there is any rotation
 					incoming_value=self.board.board_dict[tuple(robot.position)].cb[1].conveyor_in[incoming_direction]
@@ -733,15 +771,17 @@ class Game():
 						pass
 					elif incoming_value=='rotate_left':
 						self.rotate_robot(-90,robot)
-						print 'rotating robot left!'
 					elif incoming_value=='rotate_right':
 						self.rotate_robot(90,robot)
-						print 'rotating robot right!'
 					else:
 						print 'ERROR, invalid value for key'
 				else:
 					print 'Key not found in dictionary, recheck board setup'
 		self.check_offboard(robot)
+
+	#######################################################################################################################################		
+	#Function checked for 'locked' conditions, when robots are not able to move, and recursively calls this on any robots that might be affected
+	#Warning, its a bitch
 	def conveyor_collision_detection(self, queue):
 		#locked_list stores the names of robots who have the locked condition for a conveyor belt
 		#the locked condition occurs when a robot is unable to progress on the conveyor belt
@@ -765,7 +805,6 @@ class Game():
 						locked_list_locations.append(tuple(robot_j.position))
 		#now that we've checked that, lets check for any robots moving off of a conveyor belt into an occupied spot
 		#only look at unlocked robots, since locked robots can't move
-		print locked_list_robots
 		for robot in [robot for robot in queue if robot.robot_name not in locked_list_robots]:
 			robot_destination=tuple(robot.position+np.array(self.board.board_dict[tuple(robot.position)].cb[1].conveyor_out))
 			if robot_destination[0]>=0 and robot_destination[0]<=11 and robot_destination[1]>=0 and robot_destination[1]<=11:
@@ -793,11 +832,11 @@ class Game():
 				break
 		#double whew. alright, we dealt with all the BS leading up to moving conveyor belts, now we can move all robots not locked!
 		for robot in [robot for robot in queue if robot.robot_name not in locked_list_robots]:
-			print 'got here!'
 			#lets have a helper function handle this last portion
 			self.advance_conveyor_space(robot)
 
-
+	#######################################################################################################################################		
+	#Function executes all conveyor belts spaces with robots, checking for fast and slow belts
 	def execute_conveyor_belts(self):
 		#iterate over each robot, and see if they are on a fast conveyor belt, if they are, add to queue
 		fast_queue=[]
@@ -819,6 +858,10 @@ class Game():
 
 		if len(slow_queue) > 0:
 			self.conveyor_collision_detection(slow_queue)
+
+
+
+
 ###########################
 #Card object is used by robots to move or rotate, can either be in a deck, discard, hand, or register (locked or unlocked)
 ###########################
@@ -1136,7 +1179,6 @@ class Conveyor_Belt():
 		self.orientation=conveyor_dict['orientation']
 		self.conveyor_type=conveyor_dict['conveyor_type']
 		self.conveyor_out=self.orientation
-		print self.conveyor_out
 		self.conveyor_in=self.initialize_conveyor_properties()
 		self.speed=conveyor_dict['speed']
 
@@ -1160,7 +1202,6 @@ class Conveyor_Belt():
 		else:
 			print 'ERROR LOADING CONVEYOR BELT TILE!'
 			
-		print cb_dict
 			
 		#now rotate these properties based on the orientation
 		if self.orientation==(0,-1):

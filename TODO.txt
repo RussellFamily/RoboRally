@@ -33,6 +33,7 @@ Traceback (most recent call last):
   File "/home/pm8k/Documents/RoboRally/RoboRally.py", line 379, in check_pit
     print self.board.board_dict[tuple(robot.position)].pit
 KeyError: (-1, -1)
+  ->Looks like the print statement could be called while a robot was dead, so it broke. Removed print statement -> DONE
 
-
-FIX THIS
+7. Fix shutdown protocol so that a robot who dies is continued to be shutdown for the next round -> currently robot comes back with full health not shutdown
+  ->The shutdown was an equality test and not assignment, fixed issue -> DONE
