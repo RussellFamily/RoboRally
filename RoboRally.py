@@ -140,13 +140,13 @@ class Game():
 				else:
 					break
 			playernames.append(playername)
-		#Determine board to be used - for now will be a test board - and load the dictionary of the board
 
 		#implement named test board, needs to be changed to alternating boards later
 		self.board=Board(self.get_boards())
 		self.display=Display(self.board)
-		#Convert board dict to usable input
-		#TODO
+		
+		#determine flag setup
+		self.setup_flags
 
 
 		#Assign robots to players - default arrangement for now
@@ -176,6 +176,48 @@ class Game():
 				return board
 			except:
 				print 'That is not a valid entry, please try again.'
+
+	#######################################################################################################################################
+	#determine how many flags to set up, then choose a prearrangement of flags, or choose custom locations for each flag
+	def setup_flags(self):
+		#determine how many flags to touch to end the game
+		flag_num=raw_input('How many flags do you want to use? (Enter a number from 1 to 5)')
+		while True:
+			try:
+				flag_int=int(flag_num)
+				if flag_int<1 or flag_int>5:
+					raw_input('That is not a valid number, please enter a number from 1 to 5')
+				else:
+					break
+			except:
+				flag_num=raw_input('That is not a number, please enter a number from 1 to 5')
+		self.num_flags=flag_int
+		#For now we will use the defaults lined up in each config -> There will be 3 for each
+		flag_setup=raw_input('Which flag setup do you wish to use? (Enter a number from 1 to 3')
+		while True:
+			try:
+				flag_int=int(flag_setup)
+				if flag_int<1 or flag_int>3:
+					raw_input('That is not a valid number, please enter a number from 1 to 3')
+				else:
+					break
+			except:
+				flag_setup=raw_input('That is not a number, please enter a number from 1 to 3')
+		#now read in the setup from the config parser
+		configParser = ConfigParser.RawConfigParser()
+		configFilePath = r"Boards/"+boardname+"/flag_setup_config.cfg"
+		configParser.read(configFilePath)
+		
+		section='Default'+str(flag_int)
+		#setup board to be used for testing
+		#flag_dict={}
+		for i in range(1,self.num_flags+1)
+			flagx=configParser.get(section, 'Flag'+str(i)+'x')
+			flagy=configParser.get(section, 'Flag'+str(i)+'y')
+			#flag_dict[i]=(flagx,flagy)
+			self.board.board_dict[(flagx,flagy)].flag=True
+			self.board.board_dict[(flagx,flagy)].flag_num=i
+
 	#######################################################################################################################################
 	#plays through an entire round from dealing cards to finishing up end of round activities
 	def play_game_round(self):
@@ -380,7 +422,7 @@ class Game():
 					else:
 						break
 				if after_dead_result==1:
-					player.robot.shutdown==True
+					player.robot.shutdown=True
 					player.robot.damage=0
 				elif after_dead_result==2:
 					player.robot.damage=2
