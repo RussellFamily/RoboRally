@@ -1,0 +1,304 @@
+? !!python/tuple [0, 0]
+: {boardtile: blank}
+? !!python/tuple [0, 1]
+: {boardtile: blank}
+? !!python/tuple [0, 2]
+: {boardtile: blank}
+? !!python/tuple [0, 3]
+: {boardtile: blank}
+? !!python/tuple [0, 4]
+: {boardtile: blank}
+? !!python/tuple [0, 5]
+: {boardtile: blank}
+? !!python/tuple [0, 6]
+: {boardtile: blank}
+? !!python/tuple [0, 7]
+: {boardtile: blank}
+? !!python/tuple [0, 8]
+: {boardtile: blank}
+? !!python/tuple [0, 9]
+: {boardtile: blank}
+? !!python/tuple [0, 10]
+: {boardtile: blank}
+? !!python/tuple [0, 11]
+: {boardtile: blank}
+? !!python/tuple [1, 0]
+: {boardtile: blank}
+? !!python/tuple [1, 1]
+: boardtile: cb
+  cb:
+    conveyor_type: straight
+    orientation: !!python/tuple [0, 1]
+    speed: slow
+? !!python/tuple [1, 2]
+: boardtile: cb
+  cb:
+    conveyor_type: straight
+    orientation: !!python/tuple [0, 1]
+    speed: slow
+? !!python/tuple [1, 3]
+: boardtile: cb
+  cb:
+    conveyor_type: straight
+    orientation: !!python/tuple [0, 1]
+    speed: slow
+? !!python/tuple [1, 4]
+: {boardtile: blank}
+? !!python/tuple [1, 5]
+: {boardtile: blank}
+? !!python/tuple [1, 6]
+: {boardtile: blank}
+? !!python/tuple [1, 7]
+: {boardtile: blank}
+? !!python/tuple [1, 8]
+: {boardtile: blank}
+? !!python/tuple [1, 9]
+: {boardtile: blank}
+? !!python/tuple [1, 10]
+: {boardtile: blank}
+? !!python/tuple [1, 11]
+: {boardtile: blank}
+? !!python/tuple [2, 0]
+: {boardtile: blank}
+? !!python/tuple [2, 1]
+: boardtile: cb
+  cb:
+    conveyor_type: straight
+    orientation: !!python/tuple [0, 1]
+    speed: slow
+? !!python/tuple [2, 2]
+: {boardtile: blank}
+? !!python/tuple [2, 3]
+: {boardtile: blank}
+? !!python/tuple [2, 4]
+: {boardtile: blank}
+? !!python/tuple [2, 5]
+: {boardtile: blank}
+? !!python/tuple [2, 6]
+: {boardtile: blank}
+? !!python/tuple [2, 7]
+: {boardtile: blank}
+? !!python/tuple [2, 8]
+: {boardtile: blank}
+? !!python/tuple [2, 9]
+: {boardtile: blank}
+? !!python/tuple [2, 10]
+: {boardtile: blank}
+? !!python/tuple [2, 11]
+: {boardtile: blank}
+? !!python/tuple [3, 0]
+: {boardtile: blank}
+? !!python/tuple [3, 1]
+: {boardtile: blank}
+? !!python/tuple [3, 2]
+: {boardtile: blank}
+? !!python/tuple [3, 3]
+: {boardtile: blank}
+? !!python/tuple [3, 4]
+: {boardtile: blank}
+? !!python/tuple [3, 5]
+: {boardtile: blank}
+? !!python/tuple [3, 6]
+: {boardtile: blank}
+? !!python/tuple [3, 7]
+: {boardtile: blank}
+? !!python/tuple [3, 8]
+: {boardtile: blank}
+? !!python/tuple [3, 9]
+: {boardtile: blank}
+? !!python/tuple [3, 10]
+: {boardtile: blank}
+? !!python/tuple [3, 11]
+: {boardtile: blank}
+? !!python/tuple [4, 0]
+: {boardtile: blank}
+? !!python/tuple [4, 1]
+: {boardtile: blank}
+? !!python/tuple [4, 2]
+: {boardtile: blank}
+? !!python/tuple [4, 3]
+: {boardtile: blank}
+? !!python/tuple [4, 4]
+: {boardtile: blank}
+? !!python/tuple [4, 5]
+: {boardtile: blank}
+? !!python/tuple [4, 6]
+: {boardtile: blank}
+? !!python/tuple [4, 7]
+: {boardtile: blank}
+? !!python/tuple [4, 8]
+: {boardtile: blank}
+? !!python/tuple [4, 9]
+: {boardtile: blank}
+? !!python/tuple [4, 10]
+: {boardtile: blank}
+? !!python/tuple [4, 11]
+: {boardtile: blank}
+? !!python/tuple [5, 0]
+: {boardtile: blank}
+? !!python/tuple [5, 1]
+: {boardtile: blank}
+? !!python/tuple [5, 2]
+: {boardtile: blank}
+? !!python/tuple [5, 3]
+: {boardtile: blank}
+? !!python/tuple [5, 4]
+: {boardtile: blank}
+? !!python/tuple [5, 5]
+: {boardtile: blank}
+? !!python/tuple [5, 6]
+: {boardtile: blank}
+? !!python/tuple [5, 7]
+: {boardtile: blank}
+? !!python/tuple [5, 8]
+: {boardtile: blank}
+? !!python/tuple [5, 9]
+: {boardtile: blank}
+? !!python/tuple [5, 10]
+: {boardtile: blank}
+? !!python/tuple [5, 11]
+: {boardtile: blank}
+? !!python/tuple [6, 0]
+: {boardtile: blank}
+? !!python/tuple [6, 1]
+: {boardtile: blank}
+? !!python/tuple [6, 2]
+: {boardtile: blank}
+? !!python/tuple [6, 3]
+: {boardtile: blank}
+? !!python/tuple [6, 4]
+: {boardtile: blank}
+? !!python/tuple [6, 5]
+: {boardtile: blank}
+? !!python/tuple [6, 6]
+: {boardtile: blank}
+? !!python/tuple [6, 7]
+: {boardtile: blank}
+? !!python/tuple [6, 8]
+: {boardtile: blank}
+? !!python/tuple [6, 9]
+: {boardtile: blank}
+? !!python/tuple [6, 10]
+: {boardtile: blank}
+? !!python/tuple [6, 11]
+: {boardtile: blank}
+? !!python/tuple [7, 0]
+: {boardtile: blank}
+? !!python/tuple [7, 1]
+: {boardtile: blank}
+? !!python/tuple [7, 2]
+: {boardtile: blank}
+? !!python/tuple [7, 3]
+: {boardtile: blank}
+? !!python/tuple [7, 4]
+: {boardtile: blank}
+? !!python/tuple [7, 5]
+: {boardtile: blank}
+? !!python/tuple [7, 6]
+: {boardtile: blank}
+? !!python/tuple [7, 7]
+: {boardtile: blank}
+? !!python/tuple [7, 8]
+: {boardtile: blank}
+? !!python/tuple [7, 9]
+: {boardtile: blank}
+? !!python/tuple [7, 10]
+: {boardtile: blank}
+? !!python/tuple [7, 11]
+: {boardtile: blank}
+? !!python/tuple [8, 0]
+: {boardtile: blank}
+? !!python/tuple [8, 1]
+: {boardtile: blank}
+? !!python/tuple [8, 2]
+: {boardtile: blank}
+? !!python/tuple [8, 3]
+: {boardtile: blank}
+? !!python/tuple [8, 4]
+: {boardtile: blank}
+? !!python/tuple [8, 5]
+: {boardtile: blank}
+? !!python/tuple [8, 6]
+: {boardtile: blank}
+? !!python/tuple [8, 7]
+: {boardtile: blank}
+? !!python/tuple [8, 8]
+: {boardtile: blank}
+? !!python/tuple [8, 9]
+: {boardtile: blank}
+? !!python/tuple [8, 10]
+: {boardtile: blank}
+? !!python/tuple [8, 11]
+: {boardtile: blank}
+? !!python/tuple [9, 0]
+: {boardtile: blank}
+? !!python/tuple [9, 1]
+: {boardtile: blank}
+? !!python/tuple [9, 2]
+: {boardtile: blank}
+? !!python/tuple [9, 3]
+: {boardtile: blank}
+? !!python/tuple [9, 4]
+: {boardtile: blank}
+? !!python/tuple [9, 5]
+: {boardtile: blank}
+? !!python/tuple [9, 6]
+: {boardtile: blank}
+? !!python/tuple [9, 7]
+: {boardtile: blank}
+? !!python/tuple [9, 8]
+: {boardtile: blank}
+? !!python/tuple [9, 9]
+: {boardtile: blank}
+? !!python/tuple [9, 10]
+: {boardtile: blank}
+? !!python/tuple [9, 11]
+: {boardtile: blank}
+? !!python/tuple [10, 0]
+: {boardtile: blank}
+? !!python/tuple [10, 1]
+: {boardtile: blank}
+? !!python/tuple [10, 2]
+: {boardtile: blank}
+? !!python/tuple [10, 3]
+: {boardtile: blank}
+? !!python/tuple [10, 4]
+: {boardtile: blank}
+? !!python/tuple [10, 5]
+: {boardtile: blank}
+? !!python/tuple [10, 6]
+: {boardtile: blank}
+? !!python/tuple [10, 7]
+: {boardtile: blank}
+? !!python/tuple [10, 8]
+: {boardtile: blank}
+? !!python/tuple [10, 9]
+: {boardtile: blank}
+? !!python/tuple [10, 10]
+: {boardtile: blank}
+? !!python/tuple [10, 11]
+: {boardtile: blank}
+? !!python/tuple [11, 0]
+: {boardtile: blank}
+? !!python/tuple [11, 1]
+: {boardtile: blank}
+? !!python/tuple [11, 2]
+: {boardtile: blank}
+? !!python/tuple [11, 3]
+: {boardtile: blank}
+? !!python/tuple [11, 4]
+: {boardtile: blank}
+? !!python/tuple [11, 5]
+: {boardtile: blank}
+? !!python/tuple [11, 6]
+: {boardtile: blank}
+? !!python/tuple [11, 7]
+: {boardtile: blank}
+? !!python/tuple [11, 8]
+: {boardtile: blank}
+? !!python/tuple [11, 9]
+: {boardtile: blank}
+? !!python/tuple [11, 10]
+: {boardtile: blank}
+? !!python/tuple [11, 11]
+: {boardtile: blank}

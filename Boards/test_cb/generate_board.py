@@ -9,16 +9,17 @@
 #walls - provides a list of tuples on locations of walls within the tile
 #lasers - provides a list of tuples on locations of walls within the tile
 #conveyorbelt - provides a dictionary of items representing the type of conveyor belt, the speed, and the orientation of it
+#example: 'cb':{'conveyor_type':'straight','speed':'slow','orientation':(0,1)} will produce a straight, slow conveyor belt pointing down
 import yaml
 
 
-
+#TODO FIX THIS TEST BOARD
 board={(0,0):{'boardtile':'blank'},
 (0,1):{'boardtile':'blank'},
 (0,2):{'boardtile':'blank'},
 (0,3):{'boardtile':'blank'},
 (0,4):{'boardtile':'blank'},
-(0,5):{'boardtile':'blank','walls':[(0,1)],'lasers':[(0,1)]},
+(0,5):{'boardtile':'blank'},
 (0,6):{'boardtile':'blank'},
 (0,7):{'boardtile':'blank'},
 (0,8):{'boardtile':'blank'},
@@ -26,9 +27,9 @@ board={(0,0):{'boardtile':'blank'},
 (0,10):{'boardtile':'blank'},
 (0,11):{'boardtile':'blank'},
 (1,0):{'boardtile':'blank'},
-(1,1):{'boardtile':'blank'},
-(1,2):{'boardtile':'blank'},
-(1,3):{'boardtile':'blank'},
+(1,1):{'boardtile':'cb','cb':{'conveyor_type':'straight','speed':'slow','orientation':(0,1)}},
+(1,2):{'boardtile':'cb','cb':{'conveyor_type':'straight','speed':'slow','orientation':(0,1)}},
+(1,3):{'boardtile':'cb','cb':{'conveyor_type':'straight','speed':'slow','orientation':(0,1)}},
 (1,4):{'boardtile':'blank'},
 (1,5):{'boardtile':'blank'},
 (1,6):{'boardtile':'blank'},
@@ -38,7 +39,7 @@ board={(0,0):{'boardtile':'blank'},
 (1,10):{'boardtile':'blank'},
 (1,11):{'boardtile':'blank'},
 (2,0):{'boardtile':'blank'},
-(2,1):{'boardtile':'blank'},
+(2,1):{'boardtile':'cb','cb':{'conveyor_type':'straight','speed':'slow','orientation':(0,1)}},
 (2,2):{'boardtile':'blank'},
 (2,3):{'boardtile':'blank'},
 (2,4):{'boardtile':'blank'},
@@ -73,7 +74,7 @@ board={(0,0):{'boardtile':'blank'},
 (4,9):{'boardtile':'blank'},
 (4,10):{'boardtile':'blank'},
 (4,11):{'boardtile':'blank'},
-(5,0):{'boardtile':'blank','walls':[(1,0)],'lasers':[(1,0)]},
+(5,0):{'boardtile':'blank'},
 (5,1):{'boardtile':'blank'},
 (5,2):{'boardtile':'blank'},
 (5,3):{'boardtile':'blank'},

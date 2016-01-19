@@ -1,11 +1,39 @@
 TO DO LIST:
 
-1. How to handle move actions with players who are dead or shutdown during register execution
-2. Build test board and game simulation to test whether the execution of registers works - only include flags on first board.
+1. Build 5 boards from robo rally, except for parts that haven't been included as features yet
+	1.Circuit Trap -> DONE
+	2.Island -> DONE
+	3.Cross -> DONE
+	4.
+	5.
+2. Fix the laser image generation to show where lasers will fire
+3. Fix conveyors near board edge
+	1.No  longer errors out, but a dictionary location error occurred, check into that if it happens again
+4. Fix checkpoint update text to break out of while loop
+	->Added break statement DONE
+5. Rotating Conveyor belt didn't rotate robot, check into that
+	->Looks like the rotate vectors rotated the incoming vectors incorrectly, rotated them in other direction for correct result ->DONE
+6. robot1 is off the board!
 
+Traceback (most recent call last):
+  File "playgame.py", line 3, in <module>
+    x.run_game()
+  File "/home/pm8k/Documents/RoboRally/RoboRally.py", line 130, in run_game
+    self.play_game_round()
+  File "/home/pm8k/Documents/RoboRally/RoboRally.py", line 229, in play_game_round
+    self.complete_registers()
+  File "/home/pm8k/Documents/RoboRally/RoboRally.py", line 262, in complete_registers
+    self.execute_move_phase(i)
+  File "/home/pm8k/Documents/RoboRally/RoboRally.py", line 463, in execute_move_phase
+    self.execute_move(register,player.robot)
+  File "/home/pm8k/Documents/RoboRally/RoboRally.py", line 480, in execute_move
+    temp=self.move_one_square(robot,robot.direction)
+  File "/home/pm8k/Documents/RoboRally/RoboRally.py", line 552, in move_one_square
+    self.check_pit(robot)
+  File "/home/pm8k/Documents/RoboRally/RoboRally.py", line 379, in check_pit
+    print self.board.board_dict[tuple(robot.position)].pit
+KeyError: (-1, -1)
+  ->Looks like the print statement could be called while a robot was dead, so it broke. Removed print statement -> DONE
 
-
-
-Questions:
-1. Do I build the pregame stuff in terminal interface, or do i try to create a gui outright?
-	- I will select all commands from terminal, display to gui the results for first iteration
+7. Fix shutdown protocol so that a robot who dies is continued to be shutdown for the next round -> currently robot comes back with full health not shutdown
+  ->The shutdown was an equality test and not assignment, fixed issue -> DONE
