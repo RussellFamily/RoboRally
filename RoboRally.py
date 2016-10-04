@@ -30,11 +30,16 @@ class Display():
 				#blit the board tile
 				image=self.board.board_dict[(row,col)].boardtile_image
 				self.screen.blit(image,(row*100,col*100))
+
 				#if there are any walls, blit the walls on top of the tile
 				wall_list=self.board.board_dict[(row,col)].walls
 				for direction in wall_list:
 					blit_image=self.board.determine_wall_orientation(tuple(direction))
 					self.screen.blit(blit_image,(row*100,col*100))
+
+				#if there is a flag, blit a flag onto the corner of the tile (for now to be designed later in full)
+
+
 				#now blit lasers present onto the screen
 				#this consists of blitting the original laser, and blitting every space the laser can reach until it reaches a wall or the edge of the board
 				#TODO: Need a way to incorporate additional laser images onto the board
@@ -146,7 +151,7 @@ class Game():
 		self.display=Display(self.board)
 		
 		#determine flag setup
-		self.setup_flags
+		self.setup_flags()
 
 
 		#Assign robots to players - default arrangement for now
@@ -181,37 +186,37 @@ class Game():
 	#determine how many flags to set up, then choose a prearrangement of flags, or choose custom locations for each flag
 	def setup_flags(self):
 		#determine how many flags to touch to end the game
-		flag_num=raw_input('How many flags do you want to use? (Enter a number from 1 to 5)')
+		flag_num=raw_input('How many flags do you want to use? (Enter a number from 1 to 5):')
 		while True:
 			try:
 				flag_int=int(flag_num)
 				if flag_int<1 or flag_int>5:
-					raw_input('That is not a valid number, please enter a number from 1 to 5')
+					raw_input('That is not a valid number, please enter a number from 1 to 5:')
 				else:
 					break
 			except:
-				flag_num=raw_input('That is not a number, please enter a number from 1 to 5')
+				flag_num=raw_input('That is not a number, please enter a number from 1 to 5:')
 		self.num_flags=flag_int
 		#For now we will use the defaults lined up in each config -> There will be 3 for each
-		flag_setup=raw_input('Which flag setup do you wish to use? (Enter a number from 1 to 3')
+		flag_setup=raw_input('Which flag setup do you wish to use? (Enter a number from 1 to 3):')
 		while True:
 			try:
 				flag_int=int(flag_setup)
 				if flag_int<1 or flag_int>3:
-					raw_input('That is not a valid number, please enter a number from 1 to 3')
+					raw_input('That is not a valid number, please enter a number from 1 to 3:')
 				else:
 					break
 			except:
-				flag_setup=raw_input('That is not a number, please enter a number from 1 to 3')
+				flag_setup=raw_input('That is not a number, please enter a number from 1 to 3:')
 		#now read in the setup from the config parser
 		configParser = ConfigParser.RawConfigParser()
-		configFilePath = r"Boards/"+boardname+"/flag_setup_config.cfg"
+		configFilePath = r"Boards/"+self.board.boardname+"/flag_setup_config.cfg"
 		configParser.read(configFilePath)
 		
 		section='Default'+str(flag_int)
 		#setup board to be used for testing
 		#flag_dict={}
-		for i in range(1,self.num_flags+1)
+		for i in range(1,self.num_flags+1):
 			flagx=configParser.get(section, 'Flag'+str(i)+'x')
 			flagy=configParser.get(section, 'Flag'+str(i)+'y')
 			#flag_dict[i]=(flagx,flagy)
@@ -1073,6 +1078,7 @@ class Board():
 		self.board_dict=self.load_board(boardname)
 		self.images_dict=self.load_images()
 		self.lasers=self.locate_lasers()
+		
 
 	#load yaml'd dictionary of board elements into an array
 	def load_board(self,boardname):
