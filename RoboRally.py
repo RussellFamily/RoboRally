@@ -123,6 +123,13 @@ class Game():
             self.play_game_round()
         print 'GAME OVER!!!!!'
 
+    def test_run_game(self):
+        # get the board and players setup to play
+        self.test_game_setup()
+        # run game
+        while not self.end:
+            self.play_game_round()
+        print 'GAME OVER!!!!!'
     ##########################################################################
     # set up the initial parameters of the game, such as determining
     # information from the players to be read in
@@ -184,6 +191,45 @@ class Game():
             player.robot.archive = player.robot.position
 
     ##########################################################################
+    # set up the initial parameters of the game, such as determining
+    # information from the players to be read in
+    def test_game_setup(self):
+        # Determine how many players are going to be playing the game
+        num_allowed_players = [2, 3, 4]
+        print 'Welcome to Robo Rally!\n'
+        print '\nNumber of Players is 2!'
+        num_players=2
+        # READ in the names for each player
+        # maybe functionalize to reduce code here
+        playernames = ['RAZ','PM8K']
+
+        print '\nRAZ and PM8K are playing this game!'
+
+
+        # implement named test board, needs to be changed to alternating boards
+        # later
+        self.board = Board(self.test_get_boards())
+        self.display = Display(self.board)
+
+        # determine flag setup
+        self.test_setup_flags()
+
+        # Assign robots to players - default arrangement for now
+        # TODO - make dynamic
+        robots = ['robot1', 'robot2', 'robot3', 'robot4']
+        # list comprehension to create list of players
+        self.playerlist = [Player(player, robots[i])
+                           for i, player in enumerate(playernames)]
+        # The game now has a list of the players, their names, and which robots they are playing!
+        # Setup is complete, time to play the game
+        # initialize robots onto the bottom row for now, will create additional
+        # starting positions later
+        for i, player in enumerate(self.playerlist):
+            player.robot.position = np.array([i, 0])
+            player.robot.direction = np.array([0, 1])
+            player.robot.archive = player.robot.position
+
+    ##########################################################################
     # read in the board to be used for the game (called in game_setup)
     def get_boards(self):
         boards = os.listdir('./Boards')
@@ -199,6 +245,10 @@ class Game():
             except:
                 print 'That is not a valid entry, please try again.'
 
+
+    # test get boards
+    def test_get_boards(self):
+        return 'cross'
     ##########################################################################
     # determine how many flags to set up, then choose a prearrangement of
     # flags, or choose custom locations for each flag
@@ -233,6 +283,34 @@ class Game():
             except:
                 flag_setup = raw_input(
                     'That is not a number, please enter a number from 1 to 3:')
+        # now read in the setup from the config parser
+        configParser = ConfigParser.RawConfigParser()
+        configFilePath = r"Boards/" + self.board.boardname + "/flag_setup_config.cfg"
+        configParser.read(configFilePath)
+
+        section = 'Default' + str(flag_int)
+        # setup board to be used for testing
+        # flag_dict={}
+        for i in range(1, self.num_flags + 1):
+            flagx = configParser.get(section, 'Flag' + str(i) + 'x')
+            flagy = configParser.get(section, 'Flag' + str(i) + 'y')
+            # flag_dict[i]=(flagx,flagy)
+            flagx = int(flagx)
+            flagy = int(flagy)
+
+            self.board.board_dict[(flagx, flagy)].flag = True
+            self.board.board_dict[(flagx, flagy)].flag_num = i
+
+    ##########################################################################
+    # determine how many flags to set up, then choose a prearrangement of
+    # flags, or choose custom locations for each flag
+    def test_setup_flags(self):
+        # determine how many flags to touch to end the game
+        flag_int = int(1)
+        self.num_flags = flag_int
+        # For now we will use the defaults lined up in each config -> There
+        # will be 3 for each
+        flag_setup = int(1)
         # now read in the setup from the config parser
         configParser = ConfigParser.RawConfigParser()
         configFilePath = r"Boards/" + self.board.boardname + "/flag_setup_config.cfg"
@@ -414,7 +492,7 @@ class Game():
             # update board
             self.display.blitscreen(self)
 
-        # currently ask to quit the game, as currently no other function allows for this
+        # currently ask to quit the game,- as currently no other function allows for this
         # allows for a single round of testing and quitting
         quitgame = raw_input('Do you wish to quit the game? (q)')
         if quitgame == 'q':
@@ -812,15 +890,17 @@ class Game():
     # checkpoint to update their archive, and touch flags
     def checkpoint_phase(self):
         for player in [player for player in self.playerlist if player.robot.dead == False]:
+            #check to see if its a flag
             if self.board.board_dict[tuple(player.robot.position)].flag == True:
                 if player.robot.next_flag == self.board.board_dict[tuple(player.robot.position)].flag_num:
-                    print player.robot.robot_name + ' has touched Flag ' + player.robot.next_flag + '!'
+                    print player.robot.robot_name + ' has touched Flag ' + str(player.robot.next_flag) + '!'
                     if player.robot.next_flag == self.num_flags:
                         print player.name + ' has touched the last the last flag and won the game! Congrats!'
                         raw_input('Press enter to quit')
                         sys.quit()
                     else:
                         player.robot.next_flag += 1
+            # check to see if the space is a checkpoint
             if self.board.board_dict[tuple(player.robot.position)].checkpoint == True:
                 while True:
                     answer = raw_input(
