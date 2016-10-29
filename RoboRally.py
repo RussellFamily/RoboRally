@@ -738,6 +738,7 @@ class Game():
             return 'wall'
         else:
             # move robot one square
+            print 'MOVE ROBOT/n',direction
             robot.position = robot.position + direction
             # test for death conditions
             self.check_offboard(robot)
@@ -764,7 +765,7 @@ class Game():
             theta_rad), -math.sin(theta_rad)], [math.sin(theta_rad), math.cos(theta_rad)]])
         final_vector = rotation_vector.dot(dir_array)
 
-        return np.around(final_vector, 0)
+        return np.around(final_vector, 0).astype(int)
 
     ##########################################################################
     # Functions related to Firing Lasers
@@ -825,8 +826,6 @@ class Game():
                 laser_target_flag = True
 
             # check to see if the laser is off the board
-            print current_space
-            print direction
             current_space += direction
 
             if current_space[0] > 11 or current_space[0] < 0 or current_space[1] > 11 or current_space[1] < 0:
@@ -1473,5 +1472,4 @@ class Conveyor_Belt():
         rotation_vector = np.array([[math.cos(
             theta_rad), -math.sin(theta_rad)], [math.sin(theta_rad), math.cos(theta_rad)]])
         final_vector = rotation_vector.dot(dir_array)
-
-        return np.around(final_vector, 0)
+        return np.around(final_vector, 0).astype(int)
