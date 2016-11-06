@@ -31,15 +31,6 @@ class Display():
                 image = self.board.board_dict[(row, col)].boardtile_image
                 self.screen.blit(image, (row * 100, col * 100))
 
-                # if there are any walls, blit the walls on top of the tile
-                wall_list = self.board.board_dict[(row, col)].walls
-                for direction in wall_list:
-                    blit_image = self.board.determine_wall_orientation(
-                        tuple(direction))
-                    self.screen.blit(blit_image, (row * 100, col * 100))
-
-                # if there is a flag, blit a flag onto the corner of the tile
-                # (for now to be designed later in full)
 
                 # now blit lasers present onto the screen
                 # this consists of blitting the original laser, and blitting every space the laser can reach until it reaches a wall or the edge of the board
@@ -51,6 +42,22 @@ class Display():
                         tuple(direction))
                     self.screen.blit(blit_image, (row * 100, col * 100))
 
+                # if there are any walls, blit the walls on top of the tile
+                wall_list = self.board.board_dict[(row, col)].walls
+                for direction in wall_list:
+                    blit_image = self.board.determine_wall_orientation(
+                        tuple(direction))
+                    self.screen.blit(blit_image, (row * 100, col * 100))
+
+
+
+                # if there is a flag, blit a flag onto the corner of the tile
+                # (for now to be designed later in full)
+                space=self.board.board_dict[(row, col)]
+                if space.flag==True:
+                    imageloc='Images_v2/Board_Elements/flag{NUM}.png'.format(NUM=str(space.flag_num))
+                    blit_image=pygame.image.load(imageloc)
+                    self.screen.blit(blit_image, (row * 100, col * 100))
         # finally, blit player robots
         for player in Game.playerlist:
             self.screen.blit(player.robot.image_dict[tuple(player.robot.direction)], (
