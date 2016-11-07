@@ -37,9 +37,10 @@ class Display():
                 # TODO: Need a way to incorporate additional laser images onto
                 # the board
                 laser_list = self.board.board_dict[(row, col)].lasers
+                print 'list',laser_list
                 for laser_loc in laser_list:
                     blit_image = self.board.determine_laser_orientation(
-                        tuple(direction))
+                        tuple(laser_loc))
                     self.screen.blit(blit_image, (row * 100, col * 100))
 
                 # if there are any walls, blit the walls on top of the tile
@@ -1299,15 +1300,19 @@ class Board():
 
     # laser location
     def determine_laser_orientation(self, laser_direction):
+        print laser_direction
         base_image = self.images_dict['laser']
         if laser_direction == (0, 1):
+            print 1
             return base_image
         elif laser_direction == (0, -1):
+            print 2
             return pygame.transform.rotate(base_image, 180)
         elif laser_direction == (1, 0):
+            print 3
             return pygame.transform.rotate(base_image, 90)
         elif laser_direction == (-1, 0):
-
+            print 4
             return pygame.transform.rotate(base_image, -90)
         else:
             print 'LASER IMAGE ERROR'
@@ -1480,3 +1485,75 @@ class Conveyor_Belt():
             theta_rad), -math.sin(theta_rad)], [math.sin(theta_rad), math.cos(theta_rad)]])
         final_vector = rotation_vector.dot(dir_array)
         return np.around(final_vector, 0).astype(int)
+
+
+
+########
+# Used for testing
+#######
+class TestGame(Game):
+
+
+    def game_setup(self):
+        # Determine how many players are going to be playing the game
+        num_allowed_players = [2, 3, 4]
+        print 'Welcome to Robo Rally!\n'
+        print '\nNumber of Players is 2!'
+        num_players=2
+        # READ in the names for each player
+        # maybe functionalize to reduce code here
+        playernames = ['RAZ','PM8K']
+
+        print '\nRAZ and PM8K are playing this game!'
+
+
+        # implement named test board, needs to be changed to alternating boards
+        # later
+        self.board = Board(self.test_get_boards())
+        self.display = Display(self.board)
+
+        # determine flag setup
+        self.test_setup_flags()
+
+        # Assign robots to players - default arrangement for now
+        # TODO - make dynamic
+        robots = ['robot1', 'robot2', 'robot3', 'robot4']
+        # list comprehension to create list of players
+        self.playerlist = [Player(player, robots[i])
+                           for i, player in enumerate(playernames)]
+        # The game now has a list of the players, their names, and which robots they are playing!
+        # Setup is complete, time to play the game
+        # initialize robots onto the bottom row for now, will create additional
+        # starting positions later
+        for i, player in enumerate(self.playerlist):
+            player.robot.position = np.array([i, 0])
+            player.robot.direction = np.array([0, 1])
+            player.robot.archive = player.robot.position
+
+    def get_boards(self):
+        return 'cross'
+
+    def test_setup_flags(self):
+        # determine how many flags to touch to end the game
+        flag_int = int(1)
+        self.num_flags = flag_int
+        # For now we will use the defaults lined up in each config -> There
+        # will be 3 for each
+        flag_setup = int(1)
+        # now read in the setup from the config parser
+        configParser = ConfigParser.RawConfigParser()
+        configFilePath = r"Boards/" + self.board.boardname + "/flag_setup_config.cfg"
+        configParser.read(configFilePath)
+
+        section = 'Default' + str(flag_int)
+        # setup board to be used for testing
+        # flag_dict={}
+        for i in range(1, self.num_flags + 1):
+            flagx = configParser.get(section, 'Flag' + str(i) + 'x')
+            flagy = configParser.get(section, 'Flag' + str(i) + 'y')
+            # flag_dict[i]=(flagx,flagy)
+            flagx = int(flagx)
+            flagy = int(flagy)
+
+            self.board.board_dict[(flagx, flagy)].flag = True
+            self.board.board_dict[(flagx, flagy)].flag_num = i
