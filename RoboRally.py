@@ -36,12 +36,20 @@ class Display():
                 # this consists of blitting the original laser, and blitting every space the laser can reach until it reaches a wall or the edge of the board
                 # TODO: Need a way to incorporate additional laser images onto
                 # the board
-                laser_list = self.board.board_dict[(row, col)].lasers
-                print 'list',laser_list
+                laser_list = self.board.board_dict[(row, col)].laser_origins
                 for laser_loc in laser_list:
                     blit_image = self.board.determine_laser_orientation(
                         tuple(laser_loc))
                     self.screen.blit(blit_image, (row * 100, col * 100))
+
+                #for laser_loc in laser_list:
+                laser_list = self.board.board_dict[(row, col)].lasers
+                print laser_list
+                for laser_loc in laser_list:
+                    blit_image=pygame.image.load('Images_v2/Board_Elements/laser.png')
+                    self.screen.blit(blit_image, (row * 100, col * 100))
+
+
 
                 # if there are any walls, blit the walls on top of the tile
                 wall_list = self.board.board_dict[(row, col)].walls
@@ -873,7 +881,7 @@ class Game():
         # array of lasers to be stored on a stack
         to_fire = []
         for laser_loc in self.board.lasers:
-            lasers = self.board.board_dict[tuple(laser_loc)].lasers
+            lasers = self.board.board_dict[tuple(laser_loc)].laser_origins
             for laser in lasers:
                 # note: the lasers stored in the dictionary are the location with respect to the board square on where to position the laser
                 # because of this, we need to rotate the direction of the laser
@@ -1262,6 +1270,7 @@ class Board():
         self.board_dict = self.load_board(boardname)
         self.images_dict = self.load_images()
         self.lasers = self.locate_lasers()
+        self.determine_laser_fire()
 
     # load yaml'd dictionary of board elements into an array
     def load_board(self, boardname):
@@ -1300,19 +1309,14 @@ class Board():
 
     # laser location
     def determine_laser_orientation(self, laser_direction):
-        print laser_direction
-        base_image = self.images_dict['laser']
+        base_image = self.images_dict['laser_origin']
         if laser_direction == (0, 1):
-            print 1
             return base_image
         elif laser_direction == (0, -1):
-            print 2
             return pygame.transform.rotate(base_image, 180)
         elif laser_direction == (1, 0):
-            print 3
             return pygame.transform.rotate(base_image, 90)
         elif laser_direction == (-1, 0):
-            print 4
             return pygame.transform.rotate(base_image, -90)
         else:
             print 'LASER IMAGE ERROR'
@@ -1322,9 +1326,45 @@ class Board():
     def locate_lasers(self):
         all_lasers = []
         for key, value in self.board_dict.iteritems():
-            if len(value.lasers) > 0:
+            if len(value.laser_origins) > 0:
                 all_lasers.append(key)
         return all_lasers
+
+    def determine_laser_fire(self):
+        for key, value in self.board_dict.iteritems():
+            for laser in value.laser_origins:
+                row=key[0]
+                col=key[1]
+                incoming_direction = tuple(laser)
+                outgoing_direction = tuple(self.rotate_vector(tuple(laser),180))
+                space=self.board_dict[(row,col)]
+                while True:
+                    print 'here!'
+                    # check next wall
+                    if outgoing_direction in space.walls:
+                        break
+
+                    row+=outgoing_direction[0]
+                    col+=outgoing_direction[1]
+                    space=self.board_dict[(row,col)]
+                    if  not (row<=11 and row>=0 and col<=11 and col>=0):
+                        break
+                    if incoming_direction in space.walls:
+                        break
+
+                    space.lasers.append((1,0))
+                    print space.lasers
+
+
+
+
+
+    def rotate_vector(self, dir_array, theta_deg):
+        theta_rad = math.radians(theta_deg)
+        rotation_vector = np.array([[math.cos(
+            theta_rad), -math.sin(theta_rad)], [math.sin(theta_rad), math.cos(theta_rad)]])
+        final_vector = rotation_vector.dot(dir_array)
+        return np.around(final_vector, 0).astype(int)
 
 ###########################
 # Board game space used to store the location and properties of that space
@@ -1337,6 +1377,7 @@ class Boardspace():
         self.location = location
         self.boardtile = boardtile_dict['boardtile']
         self.walls = []
+        self.laser_origins = []
         self.lasers = []
         self.cb = [False, None]
         self.checkpoint = False
@@ -1401,7 +1442,7 @@ class Boardspace():
             self.walls = boardtile_dict['walls']
 
         if 'lasers' in boardtile_dict:
-            self.lasers = boardtile_dict['lasers']
+            self.laser_origins = boardtile_dict['lasers']
 
     def rotate_image(self, orientation):
         if orientation == (0, -1):
