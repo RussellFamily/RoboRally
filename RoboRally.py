@@ -39,7 +39,7 @@ class Display():
                 laser_list = self.board.board_dict[(row, col)].laser_origins
                 for laser_loc in laser_list:
                     blit_image = self.board.determine_laser_orientation(
-                        tuple(laser_loc))
+                        tuple(laser_loc),'origin')
                     self.screen.blit(blit_image, (row * 100, col * 100))
 
                 #for laser_loc in laser_list:
@@ -47,6 +47,10 @@ class Display():
                 print laser_list
                 for laser_loc in laser_list:
                     blit_image=pygame.image.load('Images_v2/Board_Elements/laser.png')
+                    laser_loc2=self.board.rotate_vector(laser_loc,180)
+                    blit_image=self.board.determine_laser_orientation(tuple(laser_loc2),'laser')
+                    # if laser_loc[1] == 0:
+                    #     blit_image=pygame.transform.rotate(blit_image, -90)
                     self.screen.blit(blit_image, (row * 100, col * 100))
 
 
@@ -1308,8 +1312,11 @@ class Board():
             print 'WALL IMAGE ERROR'
 
     # laser location
-    def determine_laser_orientation(self, laser_direction):
-        base_image = self.images_dict['laser_origin']
+    def determine_laser_orientation(self, laser_direction,ltype):
+        if ltype=='origin':
+            base_image = self.images_dict['laser_origin']
+        elif ltype=='laser':
+            base_image = self.images_dict['laser']
         if laser_direction == (0, 1):
             return base_image
         elif laser_direction == (0, -1):
@@ -1352,7 +1359,7 @@ class Board():
                     if incoming_direction in space.walls:
                         break
 
-                    space.lasers.append((1,0))
+                    space.lasers.append(outgoing_direction)
                     print space.lasers
 
 
